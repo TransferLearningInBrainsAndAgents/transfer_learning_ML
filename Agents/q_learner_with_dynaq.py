@@ -2,7 +2,7 @@ import gym
 import numpy as np
 import random
 from Agents.agents_utils import NumpyDefaultDict
-from Environments.env_utils import FlatDictSpace, DiscreteBox, DiscreteWrapper
+from Environments.gym.env_utils import FlatDictSpace, DiscreteBox, DiscreteWrapper
 
 
 class Q_Learner(object):
@@ -15,6 +15,7 @@ class Q_Learner(object):
         self.epsilon = starting_epsilon
         self.epsilon_decay = epsilon_decay
         self.minimum_epsilon = minimum_epsilon
+
         if type(env.observation_space) == gym.spaces.box.Box:
             self.discrete_observation_space = DiscreteBox(box_space=env.observation_space,
                                                           number_of_bins_per_dimension=discretisation_bins)
