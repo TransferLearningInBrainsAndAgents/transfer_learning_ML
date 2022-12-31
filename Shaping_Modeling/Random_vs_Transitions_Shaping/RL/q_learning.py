@@ -16,7 +16,7 @@ MAX_NUM_STEPS = 500
 env_reset_options = None
 
 discretisation_bins = 36
-alpha = 0.0085
+alpha = 0.1
 gamma = 1
 starting_epsilon = 0.9
 epsilon_decay = 0.000005
@@ -24,9 +24,9 @@ minimum_epsilon = 0.1
 
 results_save_folder = r'/mnt/e/Code/Mine/Transfer_Learning/Transfer_Learning_ML_Pycharm_Project/Results/' \
                      r'Q_Tabular_Target_Trap'
-result_file = join(results_save_folder, 'q_learning_results_g1_a0p0085_full_level0_env.npz')
-q_table_file = join(results_save_folder, 'q_table_g1_a0p0085_full_level0_env.npz')
-behaviour_file = join(results_save_folder, 'behaviour_g1_a0p0085_full_level0_env.npz')
+result_file = join(results_save_folder, 'q_learning_results_g1_a0p1_full_level0_env.npz')
+q_table_file = join(results_save_folder, 'q_table_g1_a0p1_full_level0_env.npz')
+behaviour_file = join(results_save_folder, 'behaviour_g1_a0p1_full_level0_env.npz')
 
 #previous_q_table = NumpyDefaultDict.load_from_numpy(q_table_file)
 previous_q_table = None

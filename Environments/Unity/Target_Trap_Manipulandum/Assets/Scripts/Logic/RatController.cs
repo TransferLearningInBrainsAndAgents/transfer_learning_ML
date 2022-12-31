@@ -13,6 +13,7 @@ public class RatController : MonoBehaviour
     [Tooltip("The amount of rotation per Rotate action. This will snap to a number that is a divisor for 350 (so the rat always returns to 0 angle). Between 1 and 90.")]
     public int rotateSnap;
 
+
     [ExecuteInEditMode]
     void OnValidate()
     {
@@ -69,15 +70,15 @@ public class RatController : MonoBehaviour
             case var move when move == all_parameters[0]: // "move_snap"
                 moveSnap = float.Parse(message.Split(":")[1]);
                 break;
-            case var move when move == all_parameters[1]: // "rotate_snap"
+            case var rotate when rotate == all_parameters[1]: // "rotate_snap"
                 rotateSnap = int.Parse(message.Split(":")[1]);
                 CorrectRotateSnap();
                 break;
-            case var move when move == all_parameters[2]: // "screen_res"
+            case var res when res == all_parameters[2]: // "screen_res"
                 var resolution = message.Split(":")[1].Split(",");
                 int width = int.Parse(resolution[0]);
                 int height = int.Parse(resolution[1]);
-                Screen.SetResolution(width, height, false);
+                EventManager.Instance.onNewScreenResolution.Invoke(width, height);
                 break;
         }
         
@@ -163,7 +164,11 @@ public class RatController : MonoBehaviour
                 break;
         }
 
-
+        // At the end of an action the new observation must be prepared ready to be send if asked
+        //Debug.Log("1. Sending Observation Required Message");
+        EventManager.Instance.onNeedingNewObservation.Invoke();
     }
+
+    
 
 }

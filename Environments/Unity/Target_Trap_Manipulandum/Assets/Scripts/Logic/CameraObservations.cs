@@ -1,5 +1,6 @@
 
 
+using System;
 using System.Collections;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,27 +11,51 @@ using UnityEngine.Rendering;
 public class CameraObservations : MonoBehaviour
 {
     private GraphicsFormat format;
+    public Camera observationCamera;
 
-    
-    IEnumerator Start()
+
+    // Event onNewScreenResolution that triggers this is thrown by the RatController
+    void RecalculateScreenRes(int width, int height)
     {
-        yield return new WaitForSeconds(1);
+        //if (screenResNotUpdated)
+        //{
+            Screen.SetResolution(width, height, FullScreenMode.Windowed);
+       //     screenResNotUpdated = false; // The screen res is allowed to be set only once
+        //}
+        
+    }
+    
+    private void Start()
+    {
+        EventManager.Instance.onNewScreenResolution.AddListener(RecalculateScreenRes);
 
-        while (true)
-        {
-            yield return new WaitForSeconds(0.001f);
-            //yield return new WaitForEndOfFrame();
+        EventManager.Instance.onNeedingNewObservation.AddListener(PrepareNewObservation);
 
-            var rt = RenderTexture.GetTemporary(Screen.width, Screen.height, 32);
+        PrepareNewObservation();
+    }
 
-            format = rt.graphicsFormat;
-            
-            ScreenCapture.CaptureScreenshotIntoRenderTexture(rt);
+    private void PrepareNewObservation()
+    {
+        //Debug.Log("2. Received Observation Required Message");
+        observationCamera.Render();
+        CaptureScreenShot();
+    }
 
-            AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32, OnCompleteReadback);
+    public void CaptureScreenShot()
+    {
+        //Debug.Log("3. Starting Capturing Screen shot");
+        var rt = default(RenderTexture);
 
-            RenderTexture.ReleaseTemporary(rt);
-        }
+        while (rt == default(RenderTexture))
+            rt = RenderTexture.GetTemporary(Screen.width, Screen.height, 0);
+
+        format = rt.graphicsFormat;
+
+        ScreenCapture.CaptureScreenshotIntoRenderTexture(rt);
+        //Debug.Log("4. Requesting GPU Readback");
+        AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32, OnCompleteReadback);
+
+        RenderTexture.ReleaseTemporary(rt);
     }
 
 
@@ -42,19 +67,21 @@ public class CameraObservations : MonoBehaviour
             return;
         }
 
-        byte[] array = request.GetData<byte>().ToArray();
-
-        byte[] pngBytes = ImageConversion.EncodeArrayToPNG(array, format, (uint)Screen.width, (uint)Screen.height);
-
-        EventManager.Instance.onObservationReady.Invoke(pngBytes);
-
-        /*
-        Task.Run(() =>
+        try
         {
-            File.WriteAllBytes($"E:/Temp/test.png", pngBytes);
-        });
-        */
+            //Debug.Log("5. Turning GPU readback into bytes array");
+            byte[]  array = request.GetData<byte>().ToArray();
 
+            byte[] pngBytes = ImageConversion.EncodeArrayToPNG(array, format, (uint)Screen.width, (uint)Screen.height);
+            //Debug.Log("6. Sending Observation Ready Message");
+            EventManager.Instance.onObservationReady.Invoke(pngBytes);
+             
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.Message);
+        }
 
     }
+
 }

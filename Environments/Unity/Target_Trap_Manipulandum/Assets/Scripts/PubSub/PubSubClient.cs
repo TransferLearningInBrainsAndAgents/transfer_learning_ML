@@ -19,6 +19,7 @@ public class PubSubClient : MonoBehaviour
     private void Start()
     {
         _listener = new PubSubListener(host, port, HandleMessage);
+
         EventManager.Instance.onStartClient.AddListener(OnStartClient);
         EventManager.Instance.onClientStarted.AddListener(() => _clientStatus = ClientStatus.Active);
         EventManager.Instance.onStopClient.AddListener(OnStopClient);

@@ -6,6 +6,7 @@ import subprocess
 import os
 import time
 import cv2
+import matplotlib.pyplot as plt
 
 unity_context = zmq.Context()
 unity_socket_action_pub = unity_context.socket(zmq.PUB)
@@ -32,7 +33,8 @@ def accurate_delay(delay):
     while time.perf_counter() < target_time:
         pass
 
-def start_unity_exe(path_to_unity_exe=path_to_unity_exe):
+
+def start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(200, 200)):
     global unity_process
     try:
         unity_process = subprocess.Popen(path_to_unity_exe)
@@ -41,19 +43,19 @@ def start_unity_exe(path_to_unity_exe=path_to_unity_exe):
         print(e)
         return False
 
-    print(first_communication_with_unity())
+    print(first_communication_with_unity(screen_res))
 
     return True
 
 
-def first_communication_with_unity():
+def first_communication_with_unity(screen_res=(200, 200)):
     try:
         # That will lock until Unity has send a request
         unity_first_request = unity_socket_init_rep.recv_string()
         unity_socket_init_rep.send_string('Python knows Unity is up.')
         time.sleep(0.1)
         # Once the req rep handshake has happened then we can send commands to the Unity exe
-
+        change_parameter('screen_res', '{}, {}'.format(screen_res[0], screen_res[1]))
     except Exception as e:
         print(e)
         return False
@@ -72,6 +74,18 @@ def do_action(action_type, action_value):
     unity_socket_action_pub.send_string('Action={}:{}'.format(action_type, action_value))
 
 
+def change_parameter(parameter_type, parameter_value):
+    """
+    Used to change certain environment parameters. The 'screen_res' parameter will only work once at the start of the
+    Unity executable (called in the first_communication_with_unity() function). The executable will not return any
+    observation pixels if the resolution parameter is not set!
+    :param parameter_type: Possible Parameters: 'move_snap', 'rotate_snap', 'screen_res'
+    :param parameter_value: move_snap -> float, move_rotate -> int, screen_res -> int, int
+    :return: Nothing
+    """
+    unity_socket_action_pub.send_string('Parameter={}:{}'.format(parameter_type, parameter_value))
+
+
 def get_observation(observation_type):
     """
     Possible observation types: 'Pixels', 'Parameters', Everything
@@ -81,16 +95,17 @@ def get_observation(observation_type):
     global unity_socket_obs_data_req
     global poller_req
 
+    start_time = time.perf_counter()
     unity_socket_obs_data_req.send_string(observation_type)
-
-    timeout = 10
+    timeout = 100
     msgs = dict(poller_req.poll(timeout))
 
     if unity_socket_obs_data_req in msgs and msgs[unity_socket_obs_data_req] == zmq.POLLIN:
         data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
         decoded = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
         decoded = np.flipud(decoded)
-        return decoded
+        end_time = time.perf_counter()
+        return decoded, (end_time - start_time) * 1000
     else:
         unity_socket_obs_data_req.setsockopt(zmq.LINGER, 0)
         unity_socket_obs_data_req.close()
@@ -99,7 +114,8 @@ def get_observation(observation_type):
         unity_socket_obs_data_req.bind("tcp://*:12345")
         poller_req = zmq.Poller()
         poller_req.register(unity_socket_obs_data_req, zmq.POLLIN)
-        return None
+        end_time = time.perf_counter()
+        return None, (end_time - start_time) * 1000
 
 
 def kill():
@@ -109,17 +125,25 @@ def kill():
     unity_socket_obs_data_req.close(linger=1)
 
 
-start_unity_exe(path_to_unity_exe=path_to_unity_exe)
+start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(300, 300))
 
 
+do_action('Rotate', 'CW')
+obs, ms_taken = get_observation('')
+plt.clf()
+plt.imshow(obs)
+
+
+obs, ms_taken = get_observation('')
 frame_num = 0
 avg_frame_times = []
-while(True):
+n = 0
+while(n < 10):
     start_frame = frame_num
     start_time = time.perf_counter()
     for k in range(36):
         do_action('Rotate', 'CW')
-        obs = get_observation('')
+        obs, ms_taken = get_observation('')
         frame_num += 1
         for i in range(10):
             do_action('Move', 'Back')
@@ -133,5 +157,6 @@ while(True):
     d_time = time.perf_counter() - start_time
     avg_frame_times.append(1000 * d_time / num_of_frames)
     print(frame_num, num_of_frames, d_time)
+    n += 1
 
 
