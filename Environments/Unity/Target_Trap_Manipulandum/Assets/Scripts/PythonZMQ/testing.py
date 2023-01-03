@@ -7,6 +7,8 @@ import os
 import time
 import cv2
 import matplotlib.pyplot as plt
+import dearpygui.dearpygui as dpg
+
 
 unity_context = zmq.Context()
 unity_socket_action_pub = unity_context.socket(zmq.PUB)
@@ -127,11 +129,74 @@ def kill():
     unity_socket_obs_data_req.close(linger=1)
 
 
-start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(100, 100))
+def connect():
+    global reward
+    global obs
+    global time_of_frame
+    start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(100, 100))
+    accurate_delay(2000)
+    reward, obs, ms_taken = get_observation('Pixels')
 
-reward, obs, ms_taken = get_observation('')
+
+# Callbacks ----------
+reward = None
+obs = None
+time_of_frame = None
 
 
+def step(sender, app_data, user_data):
+    global reward
+    global obs
+    global time_of_frame
+
+    action_type = user_data[0]
+    action_value = user_data[1]
+
+    do_action(action_type, action_value)
+    reward, obs, time_of_frame = get_observation('Pixels')
+    dpg.set_value('Reward', reward)
+    dpg.set_value('Time', time_of_frame)
+# ----------------------
+
+
+dpg.create_context()
+dpg.create_viewport(title='Rat RL', width=500, height=300)
+
+with dpg.window(label="TTM GUI", width=500, height=300):
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="Connect", callback=connect, indent=50, width=100)
+        dpg.add_button(label="Disconnect", callback=kill, indent=0, width=100)
+
+    dpg.add_spacer(height=20)
+
+    dpg.add_button(label="Forwards", callback=step, user_data=('Move', 'Forwards'), indent=100, width=100)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="CCW", callback=step, user_data=('Rotate', 'CCW'), indent=50, width=100)
+        dpg.add_button(label="CW", callback=step, user_data=('Rotate', 'CW'), indent=0, width=100)
+    dpg.add_button(label="Back", callback=step, user_data=('Move', 'Back'), indent=100, width=100)
+    dpg.add_button(label="Nothing", callback=step, user_data=('Nothing', 'Nothing'), indent=100, width=100)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="LeftPaw Extend", callback=step, user_data=('LeftPaw', 'Extend'), indent=50, width=100)
+        dpg.add_button(label="RightPaw Extend", callback=step, user_data=('RightPaw', 'Extend'), indent=0, width=100)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="LeftPaw Retrieve", callback=step, user_data=('LeftPaw', 'Retrieve'), indent=50, width=100)
+        dpg.add_button(label="RightPaw Retrieve", callback=step, user_data=('RightPaw', 'Retrieve'), indent=0, width=100)
+
+    dpg.add_spacer(height=20)
+
+    dpg.add_text(label="Reward", tag='Reward', indent=10, show_label=True)
+    dpg.add_text(label="Time of Frame / ms", tag='Time', indent=0, show_label=True)
+
+
+dpg.setup_dearpygui()
+dpg.show_viewport()
+dpg.start_dearpygui()
+dpg.destroy_context()
+
+
+
+
+'''
 do_action('Move', 'Forward')
 reward, obs, ms_taken = get_observation('Pixels')
 plt.clf()
@@ -163,5 +228,4 @@ while(n < 10):
     avg_frame_times.append(1000 * d_time / num_of_frames)
     print(frame_num, num_of_frames, d_time)
     n += 1
-
-
+'''
