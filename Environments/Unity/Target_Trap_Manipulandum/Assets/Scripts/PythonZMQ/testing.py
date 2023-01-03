@@ -102,10 +102,12 @@ def get_observation(observation_type):
 
     if unity_socket_obs_data_req in msgs and msgs[unity_socket_obs_data_req] == zmq.POLLIN:
         data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+        reward = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
         decoded = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
         decoded = np.flipud(decoded)
+        reward = reward.decode('utf-8')
         end_time = time.perf_counter()
-        return decoded, (end_time - start_time) * 1000
+        return reward, decoded, (end_time - start_time) * 1000
     else:
         unity_socket_obs_data_req.setsockopt(zmq.LINGER, 0)
         unity_socket_obs_data_req.close()
@@ -115,7 +117,7 @@ def get_observation(observation_type):
         poller_req = zmq.Poller()
         poller_req.register(unity_socket_obs_data_req, zmq.POLLIN)
         end_time = time.perf_counter()
-        return None, (end_time - start_time) * 1000
+        return None, None, (end_time - start_time) * 1000
 
 
 def kill():
@@ -125,15 +127,18 @@ def kill():
     unity_socket_obs_data_req.close(linger=1)
 
 
-start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(300, 300))
+start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(100, 100))
+
+reward, obs, ms_taken = get_observation('')
 
 
-do_action('Rotate', 'CW')
-obs, ms_taken = get_observation('')
+do_action('Move', 'Forward')
+reward, obs, ms_taken = get_observation('Pixels')
 plt.clf()
 plt.imshow(obs)
 
 
+# Measuring timings
 obs, ms_taken = get_observation('')
 frame_num = 0
 avg_frame_times = []
@@ -143,15 +148,15 @@ while(n < 10):
     start_time = time.perf_counter()
     for k in range(36):
         do_action('Rotate', 'CW')
-        obs, ms_taken = get_observation('')
+        reward, obs, ms_taken = get_observation('')
         frame_num += 1
         for i in range(10):
             do_action('Move', 'Back')
-            obs = get_observation('')
+            reward, obs = get_observation('')
             frame_num += 1
         for i in range(10):
             do_action('Move', 'Forwards')
-            obs = get_observation('')
+            reward, obs = get_observation('')
             frame_num += 1
     num_of_frames = frame_num - start_frame
     d_time = time.perf_counter() - start_time

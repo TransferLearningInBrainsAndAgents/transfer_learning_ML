@@ -58,15 +58,20 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\WindowRelated\PostProcess.cs" />
     <Compile Include="Assets\Scripts\Logic\RatController.cs" />
+    <Compile Include="Assets\Scripts\VisualScriptingNodes\SuccessOrFailureOnEnter.cs" />
     <Compile Include="Assets\Scripts\Logic\CameraObservations.cs" />
     <Compile Include="Assets\Scripts\ReqRep\ReqRepListener.cs" />
     <Compile Include="Assets\Scripts\Logic\CircularBuffer.cs" />
     <Compile Include="Assets\Scripts\WindowRelated\WriteLogToFile.cs" />
+    <Compile Include="Assets\Scripts\VisualScriptingNodes\RunningTrialOnUpdate.cs" />
     <Compile Include="Assets\Scripts\PubSub\PubSubClient.cs" />
+    <Compile Include="Assets\Scripts\Logic\CollisionCheck.cs" />
+    <Compile Include="Assets\Scripts\VisualScriptingNodes\RunningTrialOnEnter.cs" />
     <Compile Include="Assets\Scripts\PubSub\PubSubListener.cs" />
     <Compile Include="Assets\Scripts\ReqRep\ReqRepClient.cs" />
     <Compile Include="Assets\Scripts\Logic\EventManager.cs" />
     <Compile Include="Assets\Scripts\Logic\CommunicationProtocol.cs" />
+    <Compile Include="Assets\Scripts\Logic\RewardStructure.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Materials\Greyscale.shader" />
@@ -322,7 +327,7 @@
       <HintPath>Assets\Plugins\NetMQ.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@1.7.6\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <HintPath>Library\PackageCache\com.unity.visualscripting@1.8.0\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="ReportGeneratorMerged">
       <HintPath>Library\PackageCache\com.unity.testtools.codecoverage@1.0.1\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
