@@ -6,9 +6,18 @@ import subprocess
 import os
 import time
 import cv2
+import struct
 import matplotlib.pyplot as plt
 import dearpygui.dearpygui as dpg
+import array
 
+little_endian = (struct.pack('@h', 1) == struct.pack('<h', 1))
+if little_endian:
+    endian_type = 'f'
+    endian_order = 'little'
+else:
+    endian_type = '>f'
+    endian_order = 'big'
 
 unity_context = zmq.Context()
 unity_socket_action_pub = unity_context.socket(zmq.PUB)
@@ -90,9 +99,8 @@ def change_parameter(parameter_type, parameter_value):
 
 def get_observation(observation_type):
     """
-    Possible observation types: 'Pixels', 'Parameters', Everything
-    :param observation_type:
-    :return:
+    :param observation_type: string: Possible observation types: 'Pixels', 'Features', 'Everything'
+    :return: reward, pixels, features, time_of_last_frame_in_ms
     """
     global unity_socket_obs_data_req
     global poller_req
@@ -102,14 +110,20 @@ def get_observation(observation_type):
     timeout = 100
     msgs = dict(poller_req.poll(timeout))
 
+    pixels = None
+    features = None
+    reward = None
+
     if unity_socket_obs_data_req in msgs and msgs[unity_socket_obs_data_req] == zmq.POLLIN:
-        data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
-        reward = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
-        decoded = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
-        decoded = np.flipud(decoded)
-        reward = reward.decode('utf-8')
+        if observation_type == 'Pixels':
+            pixels = get_pixels()
+        if observation_type == 'Features':
+            features = get_features()
+        if observation_type == 'Everything':
+            pixels = get_pixels()
+            features = get_features()
+        reward = get_reward()
         end_time = time.perf_counter()
-        return reward, decoded, (end_time - start_time) * 1000
     else:
         unity_socket_obs_data_req.setsockopt(zmq.LINGER, 0)
         unity_socket_obs_data_req.close()
@@ -119,7 +133,49 @@ def get_observation(observation_type):
         poller_req = zmq.Poller()
         poller_req.register(unity_socket_obs_data_req, zmq.POLLIN)
         end_time = time.perf_counter()
-        return None, None, (end_time - start_time) * 1000
+
+     return reward, pixels, features, (end_time - start_time) * 1000
+
+
+def get_pixels():
+    data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+    decoded = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
+    decoded = np.flipud(decoded)
+    return decoded
+
+
+def get_features():
+    data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+    number_of_features = int.from_bytes(data, endian_order)
+    features_dict = {}
+    for i in range(number_of_features):
+        data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+        name = data.decode('utf-8')
+        data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+        type_as_str = data.decode('utf-8')
+        data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+        num_of_values = int(data.decode('utf-8'))
+        values = []
+        for k in range(num_of_values):
+            data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+            values.append(type_from_byte(data, type_as_str))
+        features_dict[name] = values
+    return features_dict
+
+
+def type_from_byte(byte, type_as_str):
+    if type_as_str == 'float':
+        return struct.unpack(endian_type, byte)[0]
+    if type_as_str == 'int':
+        return int.from_bytes(bytes, endian_order)
+    if type_as_str == 'bool':
+        return struct.unpack('?', byte)[0]
+
+
+def get_reward():
+    reward = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
+    reward = reward.decode('utf-8')
+    return reward
 
 
 def kill():
@@ -135,64 +191,113 @@ def connect():
     global time_of_frame
     start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(100, 100))
     accurate_delay(2000)
-    reward, obs, ms_taken = get_observation('Pixels')
+    reward, pixels, features, ms_taken = get_observation('Pixels')
 
 
 # Callbacks ----------
 reward = None
-obs = None
+pixels = None
+features = None
 time_of_frame = None
+total_reward = 0
+
+# Create the initial image
+texture_data = []
+for i in range(0, 100 * 100):
+    texture_data.append(100 / 255)
+    texture_data.append(100 / 255)
+    texture_data.append(100 / 255)
+    texture_data.append(255 / 255)
 
 
 def step(sender, app_data, user_data):
     global reward
-    global obs
+    global pixels
+    global features
     global time_of_frame
+    global total_reward
 
     action_type = user_data[0]
     action_value = user_data[1]
 
     do_action(action_type, action_value)
-    reward, obs, time_of_frame = get_observation('Pixels')
+    reward, pixels, features, time_of_frame = get_observation('Everything')
+    total_reward += int(reward)
     dpg.set_value('Reward', reward)
     dpg.set_value('Time', time_of_frame)
+    dpg.set_value('Total Reward', total_reward)
+
+    if pixels is not None:
+        new_texture_data = pixels.flatten('C')
+        new_texture_data = new_texture_data/255
+        new_texture_data = new_texture_data.tolist()
+        dpg.set_value("pixels_obs_tag", new_texture_data)
+
+    if features is not None:
+        dpg.set_value('Features', '{}'.format(features).replace('], ', "]\n"))
+    else:
+        dpg.set_value('Features', 'None\n\n\n\n\n\n\n')
 # ----------------------
 
-
+# THE GUI --------------
 dpg.create_context()
-dpg.create_viewport(title='Rat RL', width=500, height=300)
 
-with dpg.window(label="TTM GUI", width=500, height=300):
+with dpg.texture_registry(show=True):
+    dpg.add_dynamic_texture(width=100, height=100, default_value=texture_data, tag="pixels_obs_tag")
+
+
+dpg.create_viewport(title='Rat RL', width=520, height=750)
+
+with dpg.window(label="TTM GUI", width=520, height=750):
     with dpg.group(horizontal=True, horizontal_spacing=20):
-        dpg.add_button(label="Connect", callback=connect, indent=50, width=100)
-        dpg.add_button(label="Disconnect", callback=kill, indent=0, width=100)
+        dpg.add_button(label="Connect", callback=connect, indent=50, width=150)
+        dpg.add_button(label="Disconnect", callback=kill, indent=0, width=150)
+
+    dpg.add_spacer(height=30)
+
+    dpg.add_button(label="Forwards", callback=step, user_data=('Move', 'Forwards'), indent=150, width=150)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="CCW", callback=step, user_data=('Rotate', 'CCW'), indent=50, width=150)
+        dpg.add_button(label="CW", callback=step, user_data=('Rotate', 'CW'), indent=0, width=150)
+    dpg.add_button(label="Back", callback=step, user_data=('Move', 'Back'), indent=150, width=150)
+    dpg.add_button(label="Nothing", callback=step, user_data=('Nothing', 'Nothing'), indent=150, width=150)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="LeftPaw Extend", callback=step, user_data=('LeftPaw', 'Extend'), indent=50, width=150)
+        dpg.add_button(label="RightPaw Extend", callback=step, user_data=('RightPaw', 'Extend'), indent=0, width=150)
+    with dpg.group(horizontal=True, horizontal_spacing=20):
+        dpg.add_button(label="LeftPaw Retrieve", callback=step, user_data=('LeftPaw', 'Retrieve'), indent=50, width=150)
+        dpg.add_button(label="RightPaw Retrieve", callback=step, user_data=('RightPaw', 'Retrieve'), indent=0, width=150)
+
+    dpg.add_spacer(height=50)
+    dpg.add_text(label="ImageLabel", default_value='Pixels Observation', indent=100)
+    with dpg.group(horizontal=True, horizontal_spacing=50):
+        dpg.add_spacer(width=70)
+        dpg.add_image("pixels_obs_tag")
 
     dpg.add_spacer(height=20)
 
-    dpg.add_button(label="Forwards", callback=step, user_data=('Move', 'Forwards'), indent=100, width=100)
-    with dpg.group(horizontal=True, horizontal_spacing=20):
-        dpg.add_button(label="CCW", callback=step, user_data=('Rotate', 'CCW'), indent=50, width=100)
-        dpg.add_button(label="CW", callback=step, user_data=('Rotate', 'CW'), indent=0, width=100)
-    dpg.add_button(label="Back", callback=step, user_data=('Move', 'Back'), indent=100, width=100)
-    dpg.add_button(label="Nothing", callback=step, user_data=('Nothing', 'Nothing'), indent=100, width=100)
-    with dpg.group(horizontal=True, horizontal_spacing=20):
-        dpg.add_button(label="LeftPaw Extend", callback=step, user_data=('LeftPaw', 'Extend'), indent=50, width=100)
-        dpg.add_button(label="RightPaw Extend", callback=step, user_data=('RightPaw', 'Extend'), indent=0, width=100)
-    with dpg.group(horizontal=True, horizontal_spacing=20):
-        dpg.add_button(label="LeftPaw Retrieve", callback=step, user_data=('LeftPaw', 'Retrieve'), indent=50, width=100)
-        dpg.add_button(label="RightPaw Retrieve", callback=step, user_data=('RightPaw', 'Retrieve'), indent=0, width=100)
+    dpg.add_text(label="Features Label", default_value='Features Dictionary', indent=100)
+    dpg.add_text(label="Features", default_value='None\n\n\n\n\n\n\n', tag='Features', indent=80)
 
     dpg.add_spacer(height=20)
 
-    dpg.add_text(label="Reward", tag='Reward', indent=10, show_label=True)
-    dpg.add_text(label="Time of Frame / ms", tag='Time', indent=0, show_label=True)
+    with dpg.group(horizontal=True, horizontal_spacing=50):
+        dpg.add_text(label="Reward", tag='Reward', default_value='0', indent=100)
+        dpg.add_text(label="RewardLabel", default_value='Reward', indent=150)
+    with dpg.group(horizontal=True, horizontal_spacing=50):
+        dpg.add_text(label="Time of Frame / ms", default_value='0', tag='Time', indent=100)
+        dpg.add_text(label="Time of Frame / ms abel", default_value='Time of Frame / ms', indent=150)
+    with dpg.group(horizontal=True, horizontal_spacing=50):
+        dpg.add_text(label="Total Reward", default_value='0', tag='Total Reward', indent=100)
+        dpg.add_text(label="Total Reward Label", default_value='Total Reward', indent=150)
+
 
 
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
-
+# ----------------------
 
 
 
