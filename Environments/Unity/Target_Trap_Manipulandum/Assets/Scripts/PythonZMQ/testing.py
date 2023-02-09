@@ -1,5 +1,5 @@
 
-
+import io
 import numpy as np
 import zmq
 import subprocess
@@ -10,6 +10,10 @@ import struct
 import matplotlib.pyplot as plt
 import dearpygui.dearpygui as dpg
 import array
+import copy
+import pandas as pd
+from PIL import Image as im
+import profile
 
 little_endian = (struct.pack('@h', 1) == struct.pack('<h', 1))
 if little_endian:
@@ -29,9 +33,10 @@ unity_socket_obs_data_req.bind("tcp://*:12345")
 poller_req = zmq.Poller()
 poller_req.register(unity_socket_obs_data_req, zmq.POLLIN)
 
+features_df = pd.DataFrame()
 
 path_to_unity_exe = os.path.join(r'E:\Code\Mine\Transfer_Learning\transfer_learning_ML\Environments\Unity',
-                              'Target_Trap_Manipulandum', 'Builds', 'Target_Trap_Manipulandum.exe')
+                              'Target_Trap_Manipulandum', 'Builds', 'TTM_ExploreCorners.exe')
 
 
 def accurate_delay(delay):
@@ -48,6 +53,7 @@ def accurate_delay(delay):
 def start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(200, 200)):
     global unity_process
     try:
+        pass
         unity_process = subprocess.Popen(path_to_unity_exe)
         print(unity_process)
     except Exception as e:
@@ -64,7 +70,7 @@ def first_communication_with_unity(screen_res=(200, 200)):
         # That will lock until Unity has send a request
         unity_first_request = unity_socket_init_rep.recv_string()
         unity_socket_init_rep.send_string('Python knows Unity is up.')
-        time.sleep(0.1)
+        accurate_delay(100)
         # Once the req rep handshake has happened then we can send commands to the Unity exe
         change_parameter('screen_res', '{}, {}'.format(screen_res[0], screen_res[1]))
     except Exception as e:
@@ -90,8 +96,8 @@ def change_parameter(parameter_type, parameter_value):
     Used to change certain environment parameters. The 'screen_res' parameter will only work once at the start of the
     Unity executable (called in the first_communication_with_unity() function). The executable will not return any
     observation pixels if the resolution parameter is not set!
-    :param parameter_type: Possible Parameters: 'move_snap', 'rotate_snap', 'screen_res'
-    :param parameter_value: move_snap -> float, move_rotate -> int, screen_res -> int, int
+    :param parameter_type: Possible Parameters: 'move_snap', 'rotate_snap', 'screen_res', 'reset'
+    :param parameter_value: move_snap -> float, move_rotate -> int, screen_res -> int, int, reset -> bool (but is not used)
     :return: Nothing
     """
     unity_socket_action_pub.send_string('Parameter={}:{}'.format(parameter_type, parameter_value))
@@ -104,6 +110,7 @@ def get_observation(observation_type):
     """
     global unity_socket_obs_data_req
     global poller_req
+    global features_df
 
     start_time = time.perf_counter()
     unity_socket_obs_data_req.send_string(observation_type)
@@ -123,7 +130,19 @@ def get_observation(observation_type):
             pixels = get_pixels()
             features = get_features()
         reward = get_reward()
+
+        if features_df is not None:
+            features_reward_dict = copy.copy(features)
+            features_reward_dict['reward'] = reward
+            save_features_to_df = pd.DataFrame()
+            if len(features_df) == 0:
+                save_features_to_df = pd.DataFrame([features_reward_dict])
+            else:
+                save_features_to_df = pd.concat((save_features_to_df, pd.DataFrame([features_reward_dict])),
+                                                ignore_index=True)
+
         end_time = time.perf_counter()
+
     else:
         unity_socket_obs_data_req.setsockopt(zmq.LINGER, 0)
         unity_socket_obs_data_req.close()
@@ -134,17 +153,24 @@ def get_observation(observation_type):
         poller_req.register(unity_socket_obs_data_req, zmq.POLLIN)
         end_time = time.perf_counter()
 
-     return reward, pixels, features, (end_time - start_time) * 1000
+    return reward, pixels, features, (end_time - start_time) * 1000
 
 
 def get_pixels():
+
     data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
-    decoded = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
+    start_time = time.perf_counter()
+    profile.runctx('a = io.BytesIO(data); b = im.open(a); decoded = np.array(b)', locals=locals(), globals=globals(),
+                   filename=r'E:\Temp\get_pixels_outside_stats.txt')
+    decoded = np.asarray(im.open(io.BytesIO(data)))
+    end_time = time.perf_counter()
+    print('imdecode {}ms'.format((end_time - start_time) * 1000))
     decoded = np.flipud(decoded)
+
     return decoded
 
 
-def get_features():
+def get_features(save=False):
     data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
     number_of_features = int.from_bytes(data, endian_order)
     features_dict = {}
@@ -159,6 +185,7 @@ def get_features():
         for k in range(num_of_values):
             data = unity_socket_obs_data_req.recv(flags=zmq.NOBLOCK)
             values.append(type_from_byte(data, type_as_str))
+
         features_dict[name] = values
     return features_dict
 
@@ -178,6 +205,11 @@ def get_reward():
     return reward
 
 
+def reset(observation_type):
+    change_parameter('reset', 'True')
+    return get_observation(observation_type)
+
+
 def kill():
     unity_process.kill()
     unity_socket_action_pub.close(linger=1)
@@ -190,8 +222,20 @@ def connect():
     global obs
     global time_of_frame
     start_unity_exe(path_to_unity_exe=path_to_unity_exe, screen_res=(100, 100))
-    accurate_delay(2000)
-    reward, pixels, features, ms_taken = get_observation('Pixels')
+    accurate_delay(4000)
+    reward, pixels, features, ms_taken = get_observation('Everything')
+
+'''
+if __name__ == "__main__":
+    connect()
+    i = 0
+    while i < 10:
+        accurate_delay(500)
+        do_action('Move', 'Back')
+        reward, pixels, features, time_of_frame = get_observation('Everything')
+        i += 1
+    kill()
+'''
 
 
 # Callbacks ----------
@@ -292,45 +336,101 @@ with dpg.window(label="TTM GUI", width=520, height=750):
         dpg.add_text(label="Total Reward Label", default_value='Total Reward', indent=150)
 
 
-
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
 # ----------------------
 
-
-
 '''
-do_action('Move', 'Forward')
-reward, obs, ms_taken = get_observation('Pixels')
-plt.clf()
-plt.imshow(obs)
+# Sequesnce to get a reward in the WaitForReward Game
+slow_for_vis = False
+total_reward = 0
+average_ms_taken = 0
 
-
-# Measuring timings
-obs, ms_taken = get_observation('')
-frame_num = 0
-avg_frame_times = []
-n = 0
-while(n < 10):
-    start_frame = frame_num
-    start_time = time.perf_counter()
-    for k in range(36):
+i = 0
+for k in range(5):
+    for n in range(6): # Move to poke
+        do_action('Move', 'Forwards')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Forwards, Rew = {}'.format(total_reward))
+    nothing_steps = 10 if slow_for_vis else 400
+    for w in range(nothing_steps): # Wait
+        do_action('Nothing', 'Nothing')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Nothing, Rew = {}'.format(total_reward))
+    for b in range(6): # Back away from poke
+        do_action('Move', 'Back')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Back, Rew = {}'.format(total_reward))
+    for r in range(18): # Rotate towards reward port
         do_action('Rotate', 'CW')
-        reward, obs, ms_taken = get_observation('')
-        frame_num += 1
-        for i in range(10):
-            do_action('Move', 'Back')
-            reward, obs = get_observation('')
-            frame_num += 1
-        for i in range(10):
-            do_action('Move', 'Forwards')
-            reward, obs = get_observation('')
-            frame_num += 1
-    num_of_frames = frame_num - start_frame
-    d_time = time.perf_counter() - start_time
-    avg_frame_times.append(1000 * d_time / num_of_frames)
-    print(frame_num, num_of_frames, d_time)
-    n += 1
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Rotate, Rew = {}'.format(total_reward))
+    for n in range(8): # Move to reward port
+        do_action('Move', 'Forwards')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Forwards, Rew = {}'.format(total_reward))
+    # Got the reward now go back to the beginning
+    for b in range(8): # Back away from reward port
+        do_action('Move', 'Back')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Back, Rew = {}'.format(total_reward))
+    for r in range(18): # Rotate back to original position
+        do_action('Rotate', 'CW')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        if reward is not None: total_reward += int(reward)
+        i += 1
+        average_ms_taken = ((i-1) * average_ms_taken + ms_taken) / i
+        if slow_for_vis:
+            accurate_delay(250)
+        print('Action = Rotate, Rew = {}'.format(total_reward))
+    print('k = {}, total reward = {}, average time per frame = {} ms'.format(k, total_reward, average_ms_taken))
+
+
+# Test if the action produces the correct observations
+total_reward = 0
+for k in range(5):
+    for n in range(4):
+        do_action('Move', 'Forwards')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        total_reward += int(reward)
+        accurate_delay(250)
+        print('Action = Move F, Rew = {}'.format(total_reward))
+    for i in range(4):
+        do_action('Nothing', 'Nothing')
+        reward, pixels, features, ms_taken = get_observation('Everything')
+        total_reward += int(reward)
+        accurate_delay(250)
+        print('Action = Nothing, Rew = {}'.format(total_reward))
 '''

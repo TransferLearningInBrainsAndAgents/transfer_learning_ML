@@ -7,7 +7,7 @@ using UnityEngine;
 [UnitSubtitle("Activate Objects and Generate Random Initial Rotations")]
 
 //[TypeIcon(typeof(Codebase))]
-public class RunningTrialOnEnter : Unit
+public class RunningTrialOnEnter_WaitForReward : Unit
 {
     [DoNotSerialize]
     public ControlInput triggerOnEnter;
@@ -25,15 +25,26 @@ public class RunningTrialOnEnter : Unit
     public ValueInput Manipulandum;
 
     [DoNotSerialize]
+    public ValueInput WaitFrames;
+
+    [DoNotSerialize]
+    public ValueInput RotationSpeed;
+
+    [DoNotSerialize]
     public ValueOutput ManipulandumAngle;
 
-    float manipulandum_angle_result;
+    float manipulandum_angle;
+    float frames_to_wait_after_trial;
 
     protected override void Definition()
     {
         Target = ValueInput<GameObject>("Target Object");
         Trap = ValueInput<GameObject>("Trap Object");
-        Manipulandum = ValueInput<GameObject>("Manipulandum Object");        
+        Manipulandum = ValueInput<GameObject>("Manipulandum Object");
+        WaitFrames = ValueInput<float>("Frames to Wait");
+
+        RotationSpeed = ValueInput<float>("Rotation Speed");
+
 
         triggerOnEnter = ControlInput("triggerOnEnter", (flow) =>
         {
@@ -42,9 +53,15 @@ public class RunningTrialOnEnter : Unit
             GameObject trap = flow.GetValue<GameObject>(Trap);
             GameObject manipulandum = flow.GetValue<GameObject>(Manipulandum);
 
-            target.SetActive(true);
-            trap.SetActive(true);
-            manipulandum.SetActive(true);
+            int wait_frames = (int)flow.GetValue<float>(WaitFrames);
+            float rotation_speed = flow.GetValue<float>(RotationSpeed);
+
+            target.GetComponent<MeshRenderer>().enabled = false;
+            trap.GetComponent<MeshRenderer>().enabled = false;
+            foreach (MeshRenderer child_MR in manipulandum.GetComponentsInChildren<MeshRenderer>())
+            {
+                child_MR.enabled = false;
+            }
 
             bool cointoss = UnityEngine.Random.value >= 0.5;
 
@@ -52,28 +69,28 @@ public class RunningTrialOnEnter : Unit
             {
                 target.transform.rotation = Quaternion.Euler(0, 0, 0);
                 trap.transform.rotation = Quaternion.Euler(0, 0, 90);
+                manipulandum_angle = wait_frames * rotation_speed;
             }
             else
             {
                 target.transform.rotation = Quaternion.Euler(0, 0, 90);
                 trap.transform.rotation = Quaternion.Euler(0, 0, 0);
+                manipulandum_angle = 90f - wait_frames * rotation_speed;
             }
 
-            float random_angle;
-            if (UnityEngine.Random.value >= 0.5) random_angle = 0; else random_angle = 90;
-            float base_angle = UnityEngine.Random.Range(10, 80);
+            manipulandum.transform.rotation = Quaternion.Euler(0, 0, manipulandum_angle);
 
-            manipulandum.transform.rotation = Quaternion.Euler(0, 0, base_angle + random_angle);
 
-            manipulandum_angle_result = manipulandum.transform.eulerAngles.z;
             return resultOutput;
         });
 
-        ManipulandumAngle = ValueOutput<float>("Manipulandum Angle", (flow) => { return manipulandum_angle_result; });
+        ManipulandumAngle = ValueOutput<float>("Manipulandum Angle", (flow) => { return manipulandum_angle; });
+        
 
         Requirement(Target, triggerOnEnter);
         Requirement(Trap, triggerOnEnter);
         Requirement(Manipulandum, triggerOnEnter);
+        Requirement(WaitFrames, triggerOnEnter);
         Assignment(triggerOnEnter, ManipulandumAngle);
     }
 }

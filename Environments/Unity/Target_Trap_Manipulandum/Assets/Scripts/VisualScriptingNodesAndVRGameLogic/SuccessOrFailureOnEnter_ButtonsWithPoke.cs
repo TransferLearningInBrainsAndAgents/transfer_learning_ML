@@ -7,7 +7,7 @@ using UnityEngine;
 [UnitSubtitle("Deactivate Objects")]
 
 //[TypeIcon(typeof(Codebase))]
-public class SuccessOrFailureOnEnter : Unit
+public class SuccessOrFailureOnEnter_ButtonWithPoke : Unit
 {
     [DoNotSerialize]
     public ControlInput triggerOnEnter;
@@ -38,10 +38,13 @@ public class SuccessOrFailureOnEnter : Unit
             GameObject trap = flow.GetValue<GameObject>(Trap);
             GameObject manipulandum = flow.GetValue<GameObject>(Manipulandum);
 
-            target.SetActive(false);
-            trap.SetActive(false);
-            manipulandum.SetActive(false);
-         
+            target.GetComponent<MeshRenderer>().enabled = false;
+            trap.GetComponent<MeshRenderer>().enabled = false;
+            foreach (MeshRenderer child_MR in manipulandum.GetComponentsInChildren<MeshRenderer>())
+            {
+                child_MR.enabled = false;
+            }
+
             return resultOutput;
         });
 

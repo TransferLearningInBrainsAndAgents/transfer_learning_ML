@@ -1,3 +1,4 @@
+
 import gym
 import numpy as np
 import random
@@ -44,7 +45,6 @@ class Q_Learner(object):
         self.obs_bin_to_name[discretized_obs] = obs
         # Epsilon-Greedy action selection
         if self.epsilon > self.minimum_epsilon:
-            #self.epsilon = self.minimum_epsilon + (self.max_epsilon - self.minimum_epsilon) * np.exp(-self.epsilon_decay * episode)
             self.epsilon -= self.epsilon_decay * self.epsilon
 
         if np.random.random() > self.epsilon:

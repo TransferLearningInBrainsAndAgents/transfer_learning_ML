@@ -15,6 +15,11 @@ public class RatController : MonoBehaviour
     [Tooltip("The amount of rotation per Rotate action. This will snap to a number that is a divisor for 350 (so the rat always returns to 0 angle). Between 1 and 90.")]
     public int rotateSnap;
 
+    [Tooltip("The position of the rat when the environment resets")]
+    public Vector3 initialPosition;
+    [Tooltip("The orientation of the rat when the environment resets")]
+    public Quaternion initialRotation;
+
     private int numberOfRotations = 0;
 
     [ExecuteInEditMode]
@@ -56,11 +61,11 @@ public class RatController : MonoBehaviour
     private GameObject Target;
 
 
-    // Start is called before the first frame update
     void Start()
     {
         EventManager.Instance.onUpdatedAction.AddListener(TakeAction);
         EventManager.Instance.onParametersChange.AddListener(UpdateParameters);
+        EventManager.Instance.onResetDone.AddListener(TakeActionAfterReset);
 
         actionAndParametersComProtocol = gameObject.GetComponent<CommunicationProtocol>().actionAndParametersComProtocol;
         featuresComProtocol = gameObject.GetComponent<CommunicationProtocol>().featuresComProtocol;
@@ -71,10 +76,13 @@ public class RatController : MonoBehaviour
         Manipulandum = GameObject.Find("Manipulandum");
         Target = GameObject.Find("Target");
 
-        // actions_memory = new CircularBuffer<KeyValuePair<string, string>>(100);
-
+        EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation());
     }
 
+    /// <summary>
+    /// <c>UpdateParameters</c> is called when the agent asks the environment to change some parameter. The message format here is "ParameterType:ParameterValue" and
+    /// it should abide with the CommunicationProtocol
+    /// </summary>
     void UpdateParameters(string message)
     {
         string parameterType = message.Split(":")[0];
@@ -93,28 +101,32 @@ public class RatController : MonoBehaviour
                 rotateSnap = int.Parse(message.Split(":")[1]);
                 CorrectRotateSnap();
                 break;
-            case var res when res == all_parameters[2]: // "screen_res"
+            case var resol when resol == all_parameters[2]: // "screen_res"
                 var resolution = message.Split(":")[1].Split(",");
                 int width = int.Parse(resolution[0]);
                 int height = int.Parse(resolution[1]);
                 EventManager.Instance.onNewScreenResolution.Invoke(width, height);
                 break;
+            case var reset when reset == all_parameters[3]: // "reset". The value is ignored
+                transform.position = initialPosition;
+                transform.rotation = initialRotation;
+                EventManager.Instance.onReseting.Invoke();
+                break;
         }
         
     }
 
+    void TakeActionAfterReset()
+    {
+        TakeAction("Nothing:Nothing");
+    }
+
+    /// <summary>
+    /// <c>TakeAction</c> is called when the agent asks the environment to update itself after the agents has taken an action. 
+    /// The message format here is "ActionType:ActionValue" and it should abide with the CommunicationProtocol
+    /// </summary>
     void TakeAction(string message)
     {
-        /*
-         * Use the following code to allow multiple actions to be send at the same time (but that code ignores all but the latest of them)
-        string[] key_values = message.Split(",");
-        foreach (string str in key_values)
-        {
-            actions_memory.Add(new KeyValuePair<string, string>(str.Split(":")[0], str.Split(":")[1]));
-        }
-
-        KeyValuePair<string, string> latest_action = actions_memory.Latest();
-        */
 
         CollisionCheck headCollisionCheck = transform.Find("Head").GetComponent<CollisionCheck>();
         CollisionCheck bodyCollisionCheck = transform.Find("Body").GetComponent<CollisionCheck>();
@@ -137,6 +149,7 @@ public class RatController : MonoBehaviour
                         if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.forward, moveSnap))
                         {
                             transform.Translate(new Vector3(0, 0, moveSnap));
+                            RepositionInGrid();
                             EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.Moved);
                         }
                         else
@@ -146,6 +159,7 @@ public class RatController : MonoBehaviour
                         if (!RightPawExtended && !LeftPawExtended && !bodyCollisionCheck.ShouldIMove(-transform.forward, moveSnap))
                         {
                             transform.Translate(new Vector3(0, 0, -moveSnap));
+                            RepositionInGrid();
                             EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.Moved);
                         }
                         else
@@ -160,7 +174,7 @@ public class RatController : MonoBehaviour
                 switch (latest_action.Value)
                 {
                     case var value when value == all_values_in_action[0]: // "CW"
-                        if (!RightPawExtended && !LeftPawExtended)
+                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.forward, moveSnap))
                         {
                             numberOfRotations += 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -170,7 +184,7 @@ public class RatController : MonoBehaviour
                             EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "CCW"
-                        if (!RightPawExtended && !LeftPawExtended)
+                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.forward, moveSnap))
                         {
                             numberOfRotations -= 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -190,14 +204,14 @@ public class RatController : MonoBehaviour
                     case var value when value == all_values_in_action[0]: // "Extend"
                         if (!LeftPawExtended)
                         {
-                            transform.Find("LeftPaw").Translate(new Vector3(0, 0, 1.3f));
+                            transform.Find("LeftPaw").Translate(new Vector3(0, 0, 0.6f));
                             LeftPawExtended = true;
                         }
                         break;
                     case var value when value == all_values_in_action[1]: // "Retrieve"
                         if (LeftPawExtended)
                         {
-                            transform.Find("LeftPaw").Translate(new Vector3(0, 0, -1.3f));
+                            transform.Find("LeftPaw").Translate(new Vector3(0, 0, -0.6f));
                             LeftPawExtended = false;
                         }
                         break;
@@ -214,14 +228,14 @@ public class RatController : MonoBehaviour
                         if (!RightPawExtended)
                         {
                             RightPawExtended = true;
-                            transform.Find("RightPaw").Translate(new Vector3(0, 0, 1.3f));
+                            transform.Find("RightPaw").Translate(new Vector3(0, 0, 0.6f));
                         }
                         break;
                     case var value when value == all_values_in_action[1]: // "Retrieve"
                         if (RightPawExtended)
                         {
                             RightPawExtended = false;
-                            transform.Find("RightPaw").Translate(new Vector3(0, 0, -1.3f));
+                            transform.Find("RightPaw").Translate(new Vector3(0, 0, -0.6f));
                         }
                         break;
                 }
@@ -237,6 +251,9 @@ public class RatController : MonoBehaviour
         EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation());
     }
 
+    /// <summary>
+    /// <c>GenerateFeaturesObservation</c> is called when the environment has finished updating itself and can now generate the new features to pass to the agent if required.
+    /// </summary>
     List<byte[]> GenerateFeaturesObservation()
     {
 
@@ -261,40 +278,42 @@ public class RatController : MonoBehaviour
             string feature_dimension_size = feature_info[1];
             features_to_send.Add(Encoding.UTF8.GetBytes(feature_dimension_size)); // 3) Number of values for this feature
 
+            List<string> all_feature_names = (List<string>)featuresComProtocol.Keys.Cast<string>().ToList();
+
             switch (feature_name)
             {
-                case "Rat Position":
+                case var value when value == all_feature_names[0]: // "Rat Position"
                     features_to_send.Add(BitConverter.GetBytes(transform.position.x));
                     features_to_send.Add(BitConverter.GetBytes(transform.position.z));
                     break;
 
-                case "Rat Rotation":
+                case var value when value == all_feature_names[1]: // "Rat Rotation"
                     features_to_send.Add(BitConverter.GetBytes(transform.eulerAngles.y));
                     break;
 
-                case "Left Paw Extended":
+                case var value when value == all_feature_names[2]: // "Left Paw Extended"
                     features_to_send.Add(BitConverter.GetBytes(LeftPawExtended));
                     break;
 
-                case "Right Paw Extended":
+                case var value when value == all_feature_names[3]: // "Right Paw Extended"
                     features_to_send.Add(BitConverter.GetBytes(RightPawExtended));
                     break;
 
-                case "Left Button Position":
+                case var value when value == all_feature_names[4]: // "Left Button Position"
                     features_to_send.Add(BitConverter.GetBytes(LeftButtonPosition.x));
                     features_to_send.Add(BitConverter.GetBytes(LeftButtonPosition.z));
                     break;
 
-                case "Right Button Position":
+                case var value when value == all_feature_names[5]: // "Right Button Position"
                     features_to_send.Add(BitConverter.GetBytes(RightButtonPosition.x));
                     features_to_send.Add(BitConverter.GetBytes(RightButtonPosition.z));
                     break;
 
-                case "Target Trap State":
+                case var value when value == all_feature_names[6]: // "Target Trap State"
                     features_to_send.Add(BitConverter.GetBytes(targetTrapState));
                     break;
 
-                case "Manipulandum Angle":
+                case var value when value == all_feature_names[7]: // "Manipulandum Angle"
                     features_to_send.Add(BitConverter.GetBytes(manipulandumAngle));
                     break;
             }
@@ -303,5 +322,23 @@ public class RatController : MonoBehaviour
         return features_to_send;
     }
 
+    void RepositionInGrid()
+    {
+        float x = transform.position.x;
+        float z = transform.position.z;
+
+        string str_snap = moveSnap.ToString();
+        if (moveSnap < 0)
+        {
+            str_snap = str_snap.Replace("-", "");
+        }
+        str_snap = str_snap.Replace(".", "");
+        int removeDigits = str_snap.Length - 1;
+
+        float rounded_x = (float)Math.Round(x, removeDigits);
+        float rounded_z = (float)Math.Round(z, removeDigits);
+
+        transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);
+    }
 
 }

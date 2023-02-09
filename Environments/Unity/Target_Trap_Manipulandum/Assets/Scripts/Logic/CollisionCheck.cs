@@ -21,7 +21,7 @@ public class CollisionCheck : MonoBehaviour
         RaycastHit hit;
         if (this_rigidbody.SweepTest(direction, out hit, distance))
         {
-            if (hit.transform.name != "RewardPort")
+            if (hit.transform.name != "RewardPort" && hit.transform.name != "Hole" && !hit.transform.name.Contains("Button") && !hit.transform.name.Contains("Area"))
             {
                 return true;
             }
@@ -45,9 +45,12 @@ public class CollisionCheck : MonoBehaviour
     {
         for (int i = 0; i < ObjectsCanCollideWith.Count; i++)
         {
-            if (ObjectsCanCollideWith[i] == other.gameObject && gameobject_name != "RewardPort")
+            if (ObjectsCanCollideWith[i] == other.gameObject && gameobject_name != "RewardPort" && !gameobject_name.Contains("Area"))
                 SendAppropriatePressSignal();
+            if (gameobject_name == "RewardPort" || gameobject_name.Contains("Area"))
+                SendAppropriateUnPressSignal();
         }
+
     }
 
     private void OnTriggerExit(Collider other)
@@ -72,6 +75,12 @@ public class CollisionCheck : MonoBehaviour
             case "RewardPort":
                 CustomEvent.Trigger(transform.gameObject, "RewardPortPoked");
                 break;
+            case "Hole":
+                CustomEvent.Trigger(transform.gameObject, "HolePoked");
+                break;
+            case string value when value.Contains("AreaHigh"):
+                CustomEvent.Trigger(transform.gameObject, "AreaHighEntered");
+                break;
         }
     }
 
@@ -87,6 +96,12 @@ public class CollisionCheck : MonoBehaviour
                 break;
             case "RewardPort":
                 CustomEvent.Trigger(transform.gameObject, "RewardPortUnPoked");
+                break;
+            case "Hole":
+                CustomEvent.Trigger(transform.gameObject, "HoleUnPoked");
+                break;
+            case string value when value.Contains("AreaHigh"):
+                CustomEvent.Trigger(transform.gameObject, "AreaHighLeft");
                 break;
         }
     }
