@@ -31,7 +31,8 @@ class TargetTrapManipulandum(gym.Env):
             is 10 degrees)
     """
     def __init__(self, path_to_unity_builds: str, game_executable: str, observation_type: str = 'Features',
-                 screen_res: Tuple[int, int] = (100, 100), move_snap: float = 0.1, rotate_snap: int = 10):
+                 action_space_type: str = 'Simple', screen_res: Tuple[int, int] = (100, 100), move_snap: float = 0.1,
+                 rotate_snap: int = 10):
 
         self.observation_type = observation_type
         self.screen_res = screen_res
@@ -43,8 +44,11 @@ class TargetTrapManipulandum(gym.Env):
         self.path_to_unity_exe = os.path.join(path_to_unity_builds,  game_executable + '.exe')
 
         self.observation_space = self.generate_observation_space()
-        self.action_dict = {0: 'Nothing:Nothing', 1: 'Move:Forwards', 2: 'Move:Back', 3: 'Rotate:CW', 4: 'Rotate:CCW',
-                            5: 'LeftPaw:Extend', 6: 'LeftPaw:Retrieve', 7: 'RightPaw:Extend', 8: 'RightPaw:Retrieve'}
+        if action_space_type == 'Full':
+            self.action_dict = {0: 'Nothing:Nothing', 1: 'Move:Forwards', 2: 'Move:Back', 3: 'Rotate:CW', 4: 'Rotate:CCW',
+                                5: 'LeftPaw:Extend', 6: 'LeftPaw:Retrieve', 7: 'RightPaw:Extend', 8: 'RightPaw:Retrieve'}
+        elif action_space_type == 'Simple':
+            self.action_dict = {0: 'Move:Forwards', 1: 'Move:Back', 2: 'Rotate:CW', 3: 'Rotate:CCW'}
         self.action_space = gym.spaces.Discrete(len(self.action_dict))
 
         self.info = {'Game': self.game, 'Observation Type': self.observation_type, 'Move Snap': self.translation_snap,
@@ -145,7 +149,9 @@ class TargetTrapManipulandum(gym.Env):
         ucp.do_action(action_str)
 
         reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
-
+        if reward is None:
+            reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
+        ucp.accurate_delay(3)
         obs = self.generate_observation(pixels, features)
         terminated = False
         truncated = False

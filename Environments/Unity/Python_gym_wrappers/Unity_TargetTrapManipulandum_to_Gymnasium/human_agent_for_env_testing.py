@@ -1,6 +1,6 @@
 
 import os
-from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_wrapper import \
+from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper import \
     TargetTrapManipulandum as TTM_Env
 import dearpygui.dearpygui as dpg
 from stable_baselines3.common.env_checker import check_env

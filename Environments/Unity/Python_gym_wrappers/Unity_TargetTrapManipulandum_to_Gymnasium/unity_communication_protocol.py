@@ -291,6 +291,18 @@ def kill_unity():
         pass
 
 
+def test_if_data_have_gone_through(reward, pixels, features, observation_type):
+    if reward is None:
+        return False
+    if observation_type == 'Pixels' and pixels is None:
+        return False
+    if observation_type == 'Features' and (features is None or features == {}):
+        return False
+    if observation_type == 'Everything' and (pixels is None or (features is None or features == {})):
+        return False
+    return True
+
+
 def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
             translation_snap: float, rotation_snap: int) -> Tuple[int, np.ndarray, Dict]:
     """
@@ -310,10 +322,14 @@ def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
                                                 translation_snap=translation_snap,
                                                 rotation_snap=rotation_snap,
                                                 observation_type=observation_type)
-    accurate_delay(100)
+    accurate_delay(1000)
 
     do_action('Nothing:Nothing')
     reward, pixels, features, ms_taken = get_observation(observation_type)
+    while not test_if_data_have_gone_through(reward, pixels, features, observation_type):
+        do_action('Nothing:Nothing')
+        reward, pixels, features, ms_taken = get_observation(observation_type)
+        accurate_delay(10)
 
     return reward, pixels, features
 
