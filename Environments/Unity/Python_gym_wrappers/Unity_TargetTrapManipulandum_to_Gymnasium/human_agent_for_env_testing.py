@@ -1,5 +1,8 @@
 
 import os
+
+import numpy as np
+
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper import \
     TargetTrapManipulandum as TTM_Env
 import dearpygui.dearpygui as dpg
@@ -12,16 +15,20 @@ features = None
 time_of_frame = None
 total_reward = 0
 
+#path for the laptop
 path_to_unity_exe = os.path.join(r'E:\\', 'Code', 'Mine', 'Transfer_Learning', 'transfer_learning_ML', 'Environments',
                                  'Unity', 'Target_Trap_Manipulandum', 'Builds')
+# path for the desktop
+path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
+                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
 
 game_exe = 'TTM_ExploreCorners'
 observation_type = 'Everything'
+action_space_type = 'Full'
 
 ttm_env = TTM_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe, observation_type=observation_type,
-                  screen_res=(100, 100), move_snap=0.1, rotate_snap=10)
+                  action_space_type=action_space_type, screen_res=(100, 100), move_snap=0.4, rotate_snap=20)
 
-# check_env(ttm_env)
 
 # Create the initial image
 texture_data = []
@@ -42,6 +49,14 @@ def step(sender, app_data, user_data):
     action = user_data
 
     obs, reward, done, _, info = ttm_env.step(action)
+    if type(obs) == dict:
+        pixels = obs['Pixels']
+        features = obs['Features']
+    elif type(obs) == np.ndarray:
+        if len(obs.shape) > 1:
+            pixels = obs
+        else:
+            features = obs
 
     total_reward += reward
     dpg.set_value('Reward', reward)
@@ -49,7 +64,7 @@ def step(sender, app_data, user_data):
     dpg.set_value('Total Reward', total_reward)
 
     if pixels is not None:
-        new_texture_data = pixels.flatten('C')
+        new_texture_data = pixels.flatten('K')
         new_texture_data = new_texture_data/255
         new_texture_data = new_texture_data.tolist()
         dpg.set_value("pixels_obs_tag", new_texture_data)

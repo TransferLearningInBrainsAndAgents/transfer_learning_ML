@@ -51,7 +51,8 @@ class TargetTrapManipulandum(gym.Env):
             self.action_dict = {0: 'Move:Forwards', 1: 'Move:Back', 2: 'Rotate:CW', 3: 'Rotate:CCW'}
         self.action_space = gym.spaces.Discrete(len(self.action_dict))
 
-        self.info = {'Game': self.game, 'Observation Type': self.observation_type, 'Move Snap': self.translation_snap,
+        self.info = {'Game': self.game, 'Observation Type': self.observation_type,
+                     'Action Space Type': action_space_type, 'Move Snap': self.translation_snap,
                      'Rotate Snap': self.rotation_snap, 'Arena size': self.size_of_arena, 'Time of State Update': 0}
 
     def generate_observation_space(self) -> gym.spaces.MultiDiscrete | gym.spaces.Box | gym.spaces.Dict:
@@ -106,8 +107,8 @@ class TargetTrapManipulandum(gym.Env):
         sample = []
         # The +0.5*self.size_of_arena is because 0, 0 is in the middle of the arena and the Rat Position ranges
         # between -0.5 * self.size_of_arena and +0.5 * self.size_of_arena
-        sample.append(int(np.ceil(features['Rat Position'][0] + 0.5 * self.size_of_arena / self.translation_snap)))
-        sample.append(int(np.ceil(features['Rat Position'][1] + 0.5 * self.size_of_arena / self.translation_snap)))
+        sample.append(int(np.ceil((features['Rat Position'][0] + 0.5 * self.size_of_arena) / self.translation_snap)))
+        sample.append(int(np.ceil((features['Rat Position'][1] + 0.5 * self.size_of_arena) / self.translation_snap)))
         sample.append(int(np.ceil(features['Rat Rotation'][0]) / self.rotation_snap))
         sample.append(int(features['Left Paw Extended'][0]))
         sample.append(int(features['Right Paw Extended'][0]))
