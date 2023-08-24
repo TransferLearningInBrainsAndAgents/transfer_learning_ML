@@ -211,6 +211,7 @@ public class RatController : MonoBehaviour
                         if (!LeftPawExtended)
                         {
                             transform.Find("LeftPaw").Translate(new Vector3(0, 0, 0.6f));
+                            EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.LeftPaw);
                             LeftPawExtended = true;
                         }
                         break;
@@ -218,6 +219,7 @@ public class RatController : MonoBehaviour
                         if (LeftPawExtended)
                         {
                             transform.Find("LeftPaw").Translate(new Vector3(0, 0, -0.6f));
+                            EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.LeftPaw);
                             LeftPawExtended = false;
                         }
                         break;
@@ -234,6 +236,7 @@ public class RatController : MonoBehaviour
                         if (!RightPawExtended)
                         {
                             RightPawExtended = true;
+                            EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.RightPaw);
                             transform.Find("RightPaw").Translate(new Vector3(0, 0, 0.6f));
                         }
                         break;
@@ -241,6 +244,7 @@ public class RatController : MonoBehaviour
                         if (RightPawExtended)
                         {
                             RightPawExtended = false;
+                            EventManager.Instance.onRewardStructureChange.Invoke(RewardStructure.Instance.RightPaw);
                             transform.Find("RightPaw").Translate(new Vector3(0, 0, -0.6f));
                         }
                         break;
