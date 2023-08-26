@@ -29,10 +29,11 @@ class TargetTrapManipulandum(gym.Env):
             10 cm)
     :param rotate_snap: (int) How much the agent will rotate with every 'Rotate' command (in degrees, so the default 10
             is 10 degrees)
+    :param save_observations: (None | List) If not None then the step function will append in that list the new observation
     """
     def __init__(self, path_to_unity_builds: str, game_executable: str, observation_type: str = 'Features',
                  action_space_type: str = 'Simple', screen_res: Tuple[int, int] = (100, 100), move_snap: float = 0.1,
-                 rotate_snap: int = 10):
+                 rotate_snap: int = 10, save_observations=None):
 
         self.observation_type = observation_type
         self.screen_res = screen_res
@@ -40,6 +41,9 @@ class TargetTrapManipulandum(gym.Env):
         self.rotation_snap = rotate_snap
         self.size_of_arena = 8  # in decimeters, same units as the move_snap
         self.game = game_executable
+        self.save_observations = save_observations
+        if self.save_observations is not None:
+            self.save_observations = []
 
         self.path_to_unity_exe = os.path.join(path_to_unity_builds,  game_executable + '.exe')
 
@@ -103,20 +107,52 @@ class TargetTrapManipulandum(gym.Env):
         :param features: The Unity returned Dict
         :return: The features transformed into a gym.spaces.MultiDiscrete sample
         """
-
-        sample = []
         # The +0.5*self.size_of_arena is because 0, 0 is in the middle of the arena and the Rat Position ranges
         # between -0.5 * self.size_of_arena and +0.5 * self.size_of_arena
-        sample.append(int(np.ceil((features['Rat Position'][0] + 0.5 * self.size_of_arena) / self.translation_snap)))
-        sample.append(int(np.ceil((features['Rat Position'][1] + 0.5 * self.size_of_arena) / self.translation_snap)))
-        sample.append(int(np.ceil(features['Rat Rotation'][0]) / self.rotation_snap))
-        sample.append(int(features['Left Paw Extended'][0]))
-        sample.append(int(features['Right Paw Extended'][0]))
+        sample = [int(np.ceil((features['Rat Position'][0] + 0.5 * self.size_of_arena) / self.translation_snap)),
+                  int(np.ceil((features['Rat Position'][1] + 0.5 * self.size_of_arena) / self.translation_snap)),
+                  int(np.ceil(features['Rat Rotation'][0]) / self.rotation_snap), int(features['Left Paw Extended'][0]),
+                  int(features['Right Paw Extended'][0])]
+
         if 'FindReward' not in self.game and 'ExploreCorners' not in self.game:
             sample.append(int(features['Target Trap State'][0]))
             sample.append(int(np.ceil(features['Manipulandum Angle'])))
 
         return np.array(sample)
+
+    def generate_unity_features_dict_from_multidiscrete_sample(self, sample: np.ndarray) -> Dict:
+        """
+        The inverse of generate_multidiscrete_sample_from_unity_features_dict. Takes an array representing a
+        MultiDiscrete sample and turns it into the Unity's feature dictionary.
+        :param sample: The MultiDiscrete sample array
+        :return: The feature dictionary
+        """
+        features_keys = ['Rat Position', 'Rat Rotation', 'Left Paw Extended', 'Right Paw Extended']
+        if len(sample) == 7:
+            features_keys.append('Target Trap State')
+            features_keys.append('Manipulandum Angle')
+
+        features = dict.fromkeys(features_keys)
+        for i, s in enumerate(sample):
+            if i == 0:
+                pos_x = s * self.translation_snap - 0.5 * self.size_of_arena
+                pos = [pos_x]
+            elif i == 1:
+                pos_y = s * self.translation_snap - 0.5 * self.size_of_arena
+                pos.append(pos_y)
+                features['Rat Position'] = pos
+            elif i == 2:
+                features['Rat Rotation'] = s * self.rotation_snap
+            elif i == 3:
+                features['Left Paw Extended'] = s
+            elif i == 4:
+                features['Right Paw Extended'] = s
+            elif i == 5:
+                features['Target Trap State'] = s
+            elif i == 6:
+                features['Manipulandum Angle'] = s
+
+        return features
 
     def generate_observation(self, pixels, features) -> np.ndarray | Dict:
         """
@@ -154,6 +190,10 @@ class TargetTrapManipulandum(gym.Env):
             reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
         ucp.accurate_delay(3)
         obs = self.generate_observation(pixels, features)
+
+        if self.save_observations is not None:
+            self.save_observations.append(obs)
+            
         terminated = False
         truncated = False
 
