@@ -31,8 +31,8 @@ env = ttm_env
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 10
-number_of_trajectories = 100
+epochs = 3
+number_of_trajectories = 500
 max_ep_len = 10000
 lr = 1e-3
 gamma_lr = 0.5
@@ -41,7 +41,7 @@ gamma = 0.99
 seed = 42
 save_freq = 1
 polyak = 0.95
-batch_size = 16
+batch_size = 32
 hidden_size = 256
 start_steps = 500
 update_after = 500
@@ -49,9 +49,9 @@ update_every = 5
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
-entropy_target_mult = 0.5
+entropy_target_mult = 0.98
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, '2023_08_23-13_15', 'pyt_save', 'actor_critic_model.pt')
+#model_file_to_load = os.path.join(base_tensorboard_log, '2023_08_24-10_40', 'pyt_save', 'actor_critic_model.pt')
 
 model = SAC(env=env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len, save_freq=save_freq,
             gamma=gamma, lr=lr, gamma_lr=gamma_lr, epochs_to_update_lr=epochs_to_update_lr, polyak=polyak,
@@ -65,4 +65,4 @@ model = SAC(env=env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_l
 model.train_agent(ttm_env)
 
 
-model.test_agent(test_env=ttm_env, num_test_episodes=1, random_init=400)
+model.test_agent(test_env=ttm_env, num_test_episodes=10, random_init=400, greedy_ratio=0.5)
