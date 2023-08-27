@@ -31,15 +31,15 @@ env = ttm_env
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 3
-number_of_trajectories = 500
+epochs = 5
+number_of_trajectories = 100
 max_ep_len = 10000
 lr = 1e-3
 gamma_lr = 0.5
 epochs_to_update_lr = 2
 gamma = 0.99
 seed = 42
-save_freq = 1
+save_freq = 20
 polyak = 0.95
 batch_size = 32
 hidden_size = 256
