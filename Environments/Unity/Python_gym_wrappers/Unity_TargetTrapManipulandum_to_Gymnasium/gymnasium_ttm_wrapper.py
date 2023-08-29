@@ -33,7 +33,7 @@ class TargetTrapManipulandum(gym.Env):
     """
     def __init__(self, path_to_unity_builds: str, game_executable: str, observation_type: str = 'Features',
                  action_space_type: str = 'Simple', screen_res: Tuple[int, int] = (100, 100), move_snap: float = 0.1,
-                 rotate_snap: int = 10, save_observations=None):
+                 rotate_snap: int = 10, save_observations=False):
 
         self.observation_type = observation_type
         self.screen_res = screen_res
@@ -41,9 +41,7 @@ class TargetTrapManipulandum(gym.Env):
         self.rotation_snap = rotate_snap
         self.size_of_arena = 8  # in decimeters, same units as the move_snap
         self.game = game_executable
-        self.save_observations = save_observations
-        if self.save_observations is not None:
-            self.save_observations = []
+        self.save_observations = save_observations if save_observations is False else []
 
         self.path_to_unity_exe = os.path.join(path_to_unity_builds,  game_executable + '.exe')
 
@@ -191,7 +189,7 @@ class TargetTrapManipulandum(gym.Env):
         ucp.accurate_delay(3)
         obs = self.generate_observation(pixels, features)
 
-        if self.save_observations is not None:
+        if self.save_observations is not False:
             self.save_observations.append(obs)
             
         terminated = False
