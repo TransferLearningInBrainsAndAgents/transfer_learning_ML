@@ -8,7 +8,7 @@ from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymn
     unity_communication_protocol as ucp
 
 
-class TargetTrapManipulandum(gym.Env):
+class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
     """
     The class that creates a gymnasium environment to communicate with the Unity executable that actually runs
     the environment.

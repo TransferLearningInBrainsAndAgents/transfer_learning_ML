@@ -1,7 +1,7 @@
 
 import os
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper \
-    import TargetTrapManipulandum
+    import TargetTrapManipulandum_UnityWrapper_Env
 from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 
 
@@ -16,9 +16,9 @@ screen_res = (100, 100)
 move_snap = 0.1
 rotate_snap = 10
 
-ttm_env = TargetTrapManipulandum(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
-                                 observation_type=observation_type, screen_res=screen_res, move_snap=move_snap,
-                                 rotate_snap=rotate_snap)
+ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
+                                                  observation_type=observation_type, screen_res=screen_res, move_snap=move_snap,
+                                                  rotate_snap=rotate_snap)
 
 
 # Define and Train the agent

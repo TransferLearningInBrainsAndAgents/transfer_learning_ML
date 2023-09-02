@@ -2,8 +2,9 @@
 
 from datetime import datetime
 import os
+import pickle
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper \
-    import TargetTrapManipulandum
+    import TargetTrapManipulandum_UnityWrapper_Env
 import torch
 from rnn_sac.sac.sac import SAC
 
@@ -23,10 +24,10 @@ move_snap = 0.1
 rotate_snap = 10
 save_observations = True
 
-ttm_env = TargetTrapManipulandum(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
-                                 observation_type=observation_type, action_space_type=action_space_type,
-                                 screen_res=screen_res, move_snap=move_snap, rotate_snap=rotate_snap,
-                                 save_observations=save_observations)
+ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
+                                                  observation_type=observation_type, action_space_type=action_space_type,
+                                                  screen_res=screen_res, move_snap=move_snap, rotate_snap=rotate_snap,
+                                                  save_observations=save_observations)
 
 # Define and Train the agent
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
@@ -51,7 +52,7 @@ clip_ratio = 0.95
 use_alpha_annealing = True
 entropy_target_mult = 0.98
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, '2023_08_24-10_40', 'pyt_save', 'actor_critic_model.pt')
+#model_file_to_load = os.path.join(base_tensorboard_log, '2023_08_29-10_23', 'pyt_save', 'actor_critic_model_1_80.pt')
 
 model = SAC(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len,
             save_every_n_update=save_every_n_update, gamma=gamma, lr=lr, gamma_lr=gamma_lr,
@@ -64,5 +65,28 @@ model = SAC(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_
 
 model.train_agent(ttm_env)
 
+with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'wb') as f:
+    pickle.dump(ttm_env.save_observations, f)
 
 model.test_agent(test_env=ttm_env, num_test_episodes=1, random_init=400, greedy_ratio=0.5)
+
+
+# Plot path
+import matplotlib.path
+
+with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'rb') as f:
+    obs = pickle.load(f)
+
+
+
+obs = np.array(ttm_env.save_observations)[:, :2]
+colours = np.array([[i/obs.shape[0], 0, 0, 1] for i in range(obs.shape[0])])
+
+from matplotlib.collections import LineCollection
+lc = LineCollection(segments=[obs], colors=colours)
+fig, ax = plt.subplots()
+ax.set_xlim(obs[:, 0].min(), obs[:, 0].max())
+ax.set_ylim(obs[:, 1].min(), obs[:, 1].max())
+ax.add_collection(lc)
+
+plt.plot(obs[:, 0], obs[:, 1])

@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper import \
-    TargetTrapManipulandum as TTM_Env
+    TargetTrapManipulandum_UnityWrapper_Env as TTM_Env
 import dearpygui.dearpygui as dpg
 from stable_baselines3.common.env_checker import check_env
 
