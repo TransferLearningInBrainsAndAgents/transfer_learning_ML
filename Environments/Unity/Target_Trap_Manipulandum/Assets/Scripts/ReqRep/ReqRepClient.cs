@@ -139,7 +139,7 @@ public class ReqRepClient : MonoBehaviour
     }
 
     // Functions that create the buffers for the different responses of the environment to the agent (camera obesrvations, features observations and reward)
-    // These functions can change according to a particular environment requirements
+    // These functions can change according to particular environment requirements
 
     private void SaveNewPixelsObservation(byte[] array)
     {

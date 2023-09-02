@@ -39,6 +39,7 @@ public class CommunicationProtocol : MonoBehaviour
         featuresComProtocol.Add("Right Button Position", new List<string>() { "float", "2" });
         featuresComProtocol.Add("Target Trap State", new List<string>() { "bool", "1" });
         featuresComProtocol.Add("Manipulandum Angle", new List<string>() { "float", "1" });
+        featuresComProtocol.Add("Got Reward", new List<string>() { "int", "1" });
 
     }
 }

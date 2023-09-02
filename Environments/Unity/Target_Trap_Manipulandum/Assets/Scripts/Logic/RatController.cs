@@ -21,6 +21,7 @@ public class RatController : MonoBehaviour
     public Quaternion initialRotation;
 
     private int numberOfRotations = 0;
+    private float currentReward = 0;
 
     [ExecuteInEditMode]
     void OnValidate()
@@ -69,6 +70,7 @@ public class RatController : MonoBehaviour
         EventManager.Instance.onUpdatedAction.AddListener(TakeAction);
         EventManager.Instance.onParametersChange.AddListener(UpdateParameters);
         EventManager.Instance.onResetDone.AddListener(TakeActionAfterReset);
+        EventManager.Instance.onRewardStructureChange.AddListener(GetCurrentReward);
 
         actionAndParametersComProtocol = gameObject.GetComponent<CommunicationProtocol>().actionAndParametersComProtocol;
         featuresComProtocol = gameObject.GetComponent<CommunicationProtocol>().featuresComProtocol;
@@ -326,6 +328,17 @@ public class RatController : MonoBehaviour
                 case var value when value == all_feature_names[7]: // "Manipulandum Angle"
                     features_to_send.Add(BitConverter.GetBytes(manipulandumAngle));
                     break;
+                case var value when value == all_feature_names[8]: // "Got Reward"
+                    int reward = 0;
+                    if (currentReward == RewardStructure.Instance.RewPortPokedCorrectly ||
+                        currentReward == RewardStructure.Instance.AreaLowInterest ||
+                        currentReward == RewardStructure.Instance.AreaMedInterest ||
+                        currentReward == RewardStructure.Instance.AreaHighInterest)
+                    {
+                        reward = 1;
+                    }
+                    features_to_send.Add(BitConverter.GetBytes(reward));
+                    break;
             }
 
         }
@@ -349,6 +362,11 @@ public class RatController : MonoBehaviour
         float rounded_z = (float)Math.Round(z, removeDigits);
 
         transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);
+    }
+
+    void GetCurrentReward(float new_reward)
+    {
+        currentReward = new_reward;
     }
 
 }
