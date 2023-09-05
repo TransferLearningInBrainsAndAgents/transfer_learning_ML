@@ -77,6 +77,7 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         v) Right Paw State
         vi) Target and Trap State
         vii) Manipulandum Rotation
+        viii) Got Reward
         can be in
         vi and vii exist only for the games (environments) that use the Target Trap Manipulandum system
         (TTM_ButtonsNoPoke, TTM_ButtonsWithPoke and TTM_WaitForReward)
@@ -90,7 +91,8 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
                                         int(np.ceil(self.size_of_arena / self.translation_snap)),  # Rat Y positions
                                         int(np.ceil(360 / self.rotation_snap)),  # Rat Rotations
                                         2,  # Left Paw Extended State
-                                        2]  # Right Paw Extended State
+                                        2,  # Right Paw Extended State
+                                        2]  # Got Reward
         if 'FindReward' not in self.game and 'ExploreCorners' not in self.game:
             number_of_bins_per_dimension.append(2)  # Positions of Target and Trap
                                                     # (Vertical or Horizontal Target with perpendicular Trap)
@@ -110,7 +112,8 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         sample = [int(np.ceil((features['Rat Position'][0] + 0.5 * self.size_of_arena) / self.translation_snap)),
                   int(np.ceil((features['Rat Position'][1] + 0.5 * self.size_of_arena) / self.translation_snap)),
                   int(np.ceil(features['Rat Rotation'][0]) / self.rotation_snap), int(features['Left Paw Extended'][0]),
-                  int(features['Right Paw Extended'][0])]
+                  int(features['Right Paw Extended'][0]),
+                  int(features['Got Reward'][0])]
 
         if 'FindReward' not in self.game and 'ExploreCorners' not in self.game:
             sample.append(int(features['Target Trap State'][0]))
@@ -125,7 +128,7 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         :param sample: The MultiDiscrete sample array
         :return: The feature dictionary
         """
-        features_keys = ['Rat Position', 'Rat Rotation', 'Left Paw Extended', 'Right Paw Extended']
+        features_keys = ['Rat Position', 'Rat Rotation', 'Left Paw Extended', 'Right Paw Extended', 'Got Reward']
         if len(sample) == 7:
             features_keys.append('Target Trap State')
             features_keys.append('Manipulandum Angle')
@@ -146,8 +149,10 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
             elif i == 4:
                 features['Right Paw Extended'] = s
             elif i == 5:
-                features['Target Trap State'] = s
+                features['Got Reward'] = s
             elif i == 6:
+                features['Target Trap State'] = s
+            elif i == 7:
                 features['Manipulandum Angle'] = s
 
         return features
@@ -182,11 +187,10 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         """
         action_str = self.action_dict[action]
         ucp.do_action(action_str)
-
         reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
         if reward is None:
             reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
-        ucp.accurate_delay(3)
+        #ucp.accurate_delay(3)
         obs = self.generate_observation(pixels, features)
 
         if self.save_observations is not False:
@@ -205,12 +209,20 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
 
         :param seed: No randomness is required
         :param return_info: no return_info
-        :param options: no options
-        :return:
+        :param options: A dict {'Use Unity Editor': bool} where bool is either True if the env will not start a new
+        executable using the Unity Editor instead and False if it will
+        :return: The initial observation and the info
         """
+        if options is None:
+            options = {'Use Unity Editor': False}
+        use_unity_editor = False
+        if options['Use Unity Editor']:
+            use_unity_editor = True
+
         ucp.kill_unity()
         reward, pixels, features = ucp.connect(self.path_to_unity_exe, self.observation_type, self.screen_res,
-                                               self.translation_snap, self.rotation_snap)
+                                               self.translation_snap, self.rotation_snap,
+                                               use_unity_editor=use_unity_editor)
         obs = self.generate_observation(pixels, features)
         return obs, self.info
 

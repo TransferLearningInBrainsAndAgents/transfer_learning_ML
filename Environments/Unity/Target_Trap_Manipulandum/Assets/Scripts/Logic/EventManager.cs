@@ -14,7 +14,8 @@ public class EventManager : MonoBehaviour
     public UnityEvent onClientStarted;
     public UnityEvent onStopClient;
     public UnityEvent onClientStopped;
-    public UnityEvent onNeedingNewObservation;
+    public UnityEvent onNeedingNewPixelsObservation;
+    public UnityEvent onNeedingNewTotalReward;
     public UnityEvent onLeftButtonPressed;
     public UnityEvent onRightButtonPressed;
     public UnityEvent onLeftButtonUnPressed;
@@ -22,6 +23,7 @@ public class EventManager : MonoBehaviour
     public UnityEvent onRewardPortTouched;
     public UnityEvent onReseting;
     public UnityEvent onResetDone;
+    public UnityEvent onStopFeaturesSending;
 
     [System.Serializable]
     public class StringEvent : UnityEvent<string> { }
@@ -34,7 +36,9 @@ public class EventManager : MonoBehaviour
 
     public StringEvent onUpdatedAction;
     public StringEvent onParametersChange;
-    public FloatEvent onRewardStructureChange;
+    public FloatEvent onRewardFromAction;
+    public FloatEvent onRewardReady;
+    public IntEvent onRedoFeaturesObservations;
     public ByteArrayEvent onPixelsObservationReady;
     public FloatEvent onNewMoveSnapReceived;
     public FloatEvent onNewRotateSnapReceived;
@@ -48,29 +52,39 @@ public class EventManager : MonoBehaviour
         {
             Instance = this;
 
+            //ZMQ Client Events
             onStartClient = new();
             onClientStarted = new();
             onStopClient = new();
             onClientStopped = new();
-            onNeedingNewObservation = new();
-            onLeftButtonPressed = new();
-            onRightButtonPressed = new();
-            onLeftButtonUnPressed = new();
-            onRightButtonUnPressed = new();
-            onRewardPortTouched = new();
+
+            //Parameters Events
             onReseting = new();
             onResetDone = new();
-
-            onUpdatedAction = new();
             onParametersChange = new();
-            onPixelsObservationReady = new();
-            onFeaturesObservationReady = new();
-
             onNewMoveSnapReceived = new();
             onNewRotateSnapReceived = new();
             onNewScreenResolution = new();
 
-            onRewardStructureChange = new();
+            //Action Events
+            onLeftButtonPressed = new();
+            onRightButtonPressed = new();
+            onLeftButtonUnPressed = new();
+            onRightButtonUnPressed = new();
+            onUpdatedAction = new();
+
+            //Observations Events
+            onNeedingNewPixelsObservation = new();
+            onPixelsObservationReady = new();
+            onFeaturesObservationReady = new();
+            onRedoFeaturesObservations = new();
+            onStopFeaturesSending = new();
+;
+            //Reward Events
+            onNeedingNewTotalReward = new();
+            onRewardPortTouched = new();
+            onRewardFromAction = new();
+            onRewardReady = new();
         }
 
         else

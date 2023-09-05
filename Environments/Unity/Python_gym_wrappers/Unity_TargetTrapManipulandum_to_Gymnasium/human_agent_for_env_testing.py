@@ -49,6 +49,7 @@ def step(sender, app_data, user_data):
     action = user_data
 
     obs, reward, done, _, info = ttm_env.step(action)
+
     if type(obs) == dict:
         pixels = obs['Pixels']
         features = obs['Features']
@@ -58,7 +59,8 @@ def step(sender, app_data, user_data):
         else:
             features = obs
 
-    total_reward += reward
+    if reward:
+        total_reward += reward
     dpg.set_value('Reward', reward)
     dpg.set_value('Time', time_of_frame)
     dpg.set_value('Total Reward', total_reward)
@@ -73,6 +75,10 @@ def step(sender, app_data, user_data):
         dpg.set_value('Features', '{}'.format(features).replace('], ', "]\n"))
     else:
         dpg.set_value('Features', 'None\n\n\n\n\n\n\n')
+
+
+def reset(sender, app_data, user_data):
+    ttm_env.reset(options=user_data)
 # ----------------------
 
 # THE GUI --------------
@@ -86,8 +92,9 @@ dpg.create_viewport(title='Rat RL', width=520, height=750)
 
 with dpg.window(label="TTM GUI", width=520, height=750):
     with dpg.group(horizontal=True, horizontal_spacing=20):
-        dpg.add_button(label="Connect", callback=ttm_env.reset, indent=50, width=150)
-        dpg.add_button(label="Disconnect", callback=ttm_env.close, indent=0, width=150)
+        dpg.add_button(label="Start & Connect", callback=reset, user_data={'Use Unity Editor': False}, indent=10, width=140)
+        dpg.add_button(label="Just Connect", callback=reset, user_data={'Use Unity Editor': True}, indent=0, width=140)
+        dpg.add_button(label="Disconnect", callback=ttm_env.close, indent=0, width=140)
 
     dpg.add_spacer(height=30)
 

@@ -86,7 +86,7 @@ public class CollisionCheck : MonoBehaviour
                 break;
         }
     }
-
+    
     private void SendAppropriateUnPressSignal()
     {
         switch (gameobject_name)

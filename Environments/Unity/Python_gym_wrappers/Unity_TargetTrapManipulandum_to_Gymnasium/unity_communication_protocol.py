@@ -108,8 +108,7 @@ def start_unity_exe(unity_exe) -> bool:
 
 
 def first_communication_with_unity(screen_res: Tuple[int, int] = (200, 200), translation_snap: float = 1,
-                                   rotation_snap: int = 20, observation_type: str = 'Everything') -> \
-                                    Tuple[int | None, np.ndarray | None, Dict | None, float | None]:
+                                   rotation_snap: int = 20, observation_type: str = 'Everything') -> bool:
     """
     Once the executable is running this function communicates with it for the first time, handshakes and passes the
     initialisation parameters to it.
@@ -135,13 +134,13 @@ def first_communication_with_unity(screen_res: Tuple[int, int] = (200, 200), tra
         accurate_delay(100)
 
         # Finally get the observation that has been prepared.
-        reward, pixels, features, ms_taken = get_observation(observation_type)
+        #reward, pixels, features, ms_taken = get_observation(observation_type)
 
     except Exception as e:
         print(e)
-        return None, None, None, None
+        return False
 
-    return reward, pixels, features, ms_taken
+    return True
 
 
 def do_action(action: str):
@@ -189,14 +188,18 @@ def get_observation(observation_type):
     reward = None
 
     if unity_socket_obs_data_req in msgs and msgs[unity_socket_obs_data_req] == zmq.POLLIN:
+
         if observation_type == 'Pixels':
+            reward = get_reward()
             pixels = get_pixels()
         if observation_type == 'Features':
             features = get_features()
+            reward = get_reward()
         if observation_type == 'Everything':
-            pixels = get_pixels()
             features = get_features()
-        reward = get_reward()
+            reward = get_reward()
+            pixels = get_pixels()
+
     else:
         unity_socket_obs_data_req.setsockopt(zmq.LINGER, 0)
         unity_socket_obs_data_req.close()
@@ -254,7 +257,7 @@ def type_from_byte(byte, type_as_str) -> float | int | bool:
     if type_as_str == 'float':
         return struct.unpack(endian_type, byte)[0]
     elif type_as_str == 'int':
-        return int.from_bytes(bytes, endian_order)
+        return int.from_bytes(byte, endian_order)
     elif type_as_str == 'bool':
         return struct.unpack('?', byte)[0]
     else:
@@ -304,7 +307,8 @@ def test_if_data_have_gone_through(reward, pixels, features, observation_type):
 
 
 def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
-            translation_snap: float, rotation_snap: int) -> Tuple[int, np.ndarray, Dict]:
+            translation_snap: float, rotation_snap: int, use_unity_editor: bool = False) ->\
+        Tuple[int, np.ndarray, Dict] | None:
     """
     Sets up the sockets, starts the Unity executable, connects to it and handshakes with it passing the initial
     parameters of the environment
@@ -313,23 +317,31 @@ def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
     :param screen_res: The resolution of the game's screen (and thus the resolution of the pixels' observation)
     :param translation_snap: The amount of degrees the agent rotates per Rotation action
     :param rotation_snap: The amount of decimiters the agent moves per Move action
+    :param use_unity_editor: If true the connect function doesn't start a separate executable but instead uses what is
+    already running (e.g. the game running inside the Unity editor
     :return: The initial reward, feature dict and pixels
     """
     connect_sockets()
-    start_unity_exe(executable)
-    accurate_delay(5000)
-    _, _, _, _ = first_communication_with_unity(screen_res=screen_res,
-                                                translation_snap=translation_snap,
-                                                rotation_snap=rotation_snap,
-                                                observation_type=observation_type)
-    accurate_delay(1000)
+    if not use_unity_editor:
+        start_unity_exe(executable)
+    accurate_delay(3000)
+    connection_state = first_communication_with_unity(screen_res=screen_res,
+                                                      translation_snap=translation_snap,
+                                                      rotation_snap=rotation_snap,
+                                                      observation_type=observation_type)
 
-    do_action('Nothing:Nothing')
-    reward, pixels, features, ms_taken = get_observation(observation_type)
-    while not test_if_data_have_gone_through(reward, pixels, features, observation_type):
+    if connection_state:
         do_action('Nothing:Nothing')
+        accurate_delay(5)
         reward, pixels, features, ms_taken = get_observation(observation_type)
-        accurate_delay(10)
+        while not test_if_data_have_gone_through(reward, pixels, features, observation_type):
+            do_action('Nothing:Nothing')
+            accurate_delay(5)
+            reward, pixels, features, ms_taken = get_observation(observation_type)
+            accurate_delay(50)
+    else:
+        print('Cannot connect to Unity game.')
+        return None
 
     return reward, pixels, features
 

@@ -25,11 +25,13 @@ public class ReqRepClient : MonoBehaviour
     private ReqRepListener _listener;
     private ClientStatus _clientStatus = ClientStatus.Inactive;
 
+    private bool newPixelsObservationArrayReady = false;
+    private bool newFeaturessObservationReady = false;
+    private bool newRewardReady = false;
+
     private byte[] observationPixelsArray;
-    private bool newObservationArrayReady = false;
-    private float reward = 0f;
-    private bool touchRewardPriority = false;
     private List<byte[]> observationFeaturesList;
+    private float reward = 0f;
 
     private List<string> comProtocol;
 
@@ -44,9 +46,10 @@ public class ReqRepClient : MonoBehaviour
         EventManager.Instance.onClientStopped.AddListener(() => _clientStatus = ClientStatus.Inactive);
 
         EventManager.Instance.onPixelsObservationReady.AddListener(SaveNewPixelsObservation);
-        EventManager.Instance.onRewardStructureChange.AddListener(SaveNewReward);
         EventManager.Instance.onFeaturesObservationReady.AddListener(SaveNewFeaturesObservation);
+        EventManager.Instance.onRewardReady.AddListener(SaveNewReward);
 
+        EventManager.Instance.onStopFeaturesSending.AddListener(StopFeaturesSending);
 
         comProtocol = GameObject.Find("Rat").GetComponent<CommunicationProtocol>().observationsComProtocol;
 
@@ -90,102 +93,107 @@ public class ReqRepClient : MonoBehaviour
     /// <param name="message">the message from the agent describing what observation it needs. The possible values should be defined in the CommunicationProtocol</param>
     private void HandleResponseMessage(string message, ResponseSocket repSocket)
     {
+        //Debug.Log("-- HandleResponseMessage Start");
+
+        while(!newRewardReady || !newFeaturessObservationReady || !newPixelsObservationArrayReady) { }
+
         TimeSpan timeout = new(0, 0, 1);
 
+
         if (message == comProtocol[0]) // "Pixels"
-            SendPixels(repSocket, timeout);
+        {
+            SendReward(repSocket, timeout, true);
+            SendPixels(repSocket, timeout, false);
+        }
 
         if (message == comProtocol[1]) // "Features"
+        {
             SendFeatures(repSocket, timeout);
+            SendReward(repSocket, timeout, false);
+        }
+            
 
         if (message == comProtocol[2]) // "Everything"
         {
-            SendPixels(repSocket, timeout);
             SendFeatures(repSocket, timeout);
+            SendReward(repSocket, timeout, true);
+            SendPixels(repSocket, timeout, false);
         }
 
-        SendReward(repSocket, timeout);
-
+        newRewardReady = false;
+        newFeaturessObservationReady = false;
+        newPixelsObservationArrayReady = false;
+        //Debug.Log("-- HandleResponseMessage End");
     }
 
     // Functions that deal with the different requests by the agent (like camera observations, feature observations and rewards)
-
-    private void SendPixels(ResponseSocket repSocket, TimeSpan timeout)
+    private void SendReward(ResponseSocket repSocket, TimeSpan timeout, bool more)
     {
-        while (!newObservationArrayReady) {}
-        
-        repSocket.TrySendFrame(timeout, observationPixelsArray, true);
-
-        newObservationArrayReady = false;
+        //Debug.Log($"---- Start Sending Reward = {reward}");
+        while (!newRewardReady) { }
+        string stringReward = reward.ToString();
+        repSocket.TrySendFrame(timeout, stringReward, more);
+        reward = 0f;
+        newRewardReady = false;
+        //Debug.Log("---- End Sending Reward");
     }
 
     private void SendFeatures(ResponseSocket repSocket, TimeSpan timeout)
     {
+        //Debug.Log($"---- Start Sending Features, e.g. {observationFeaturesList[8]}");
+        while (!newFeaturessObservationReady) { }
         foreach(byte[] feature in observationFeaturesList)
         {
             repSocket.TrySendFrame(timeout, feature, true);
         }
-        
+
+        newFeaturessObservationReady = false;
+        //Debug.Log("---- End Sending Features");
     }
 
-    private void SendReward(ResponseSocket repSocket, TimeSpan timeout)
+    private void SendPixels(ResponseSocket repSocket, TimeSpan timeout, bool more)
     {
-        string stringReward = reward.ToString();
-        repSocket.TrySendFrame(timeout, stringReward, false);
-        if (reward == RewardStructure.Instance.RewPortPokedCorrectly)
-        {
-            reward = RewardStructure.Instance.NotMoved;
-        }
+        //Debug.Log($"---- Start Sending Pixels {observationPixelsArray.Length}");
+        while (!newPixelsObservationArrayReady) {}
+
+        repSocket.TrySendFrame(timeout, observationPixelsArray, more);
+
+        newPixelsObservationArrayReady = false;
+
+        //Debug.Log("---- End Sending Pixels");
     }
 
-    // Functions that create the buffers for the different responses of the environment to the agent (camera obesrvations, features observations and reward)
-    // These functions can change according to particular environment requirements
+    // Functions that create the buffers for the different responses of the environment to the agent
+    // (camera obesrvations, features observations and reward)
+    // These functions are called from Events Invoked by the corresponding controller objects
 
     private void SaveNewPixelsObservation(byte[] array)
     {
+        //Debug.Log("---- Start Saving Pixels");
         observationPixelsArray = array;
-        newObservationArrayReady = true;
-    }
-
-    private void SaveNewReward(float new_reward)
-    {
-        if(!touchRewardPriority)
-            reward = new_reward;
-        touchRewardPriority = false;
-    }
-
-    // This is called from the Visual Scripting Graph in the VRGame Object,
-    // by the Transition (Success State -> Running_Trial State), 
-    // if there is a Reward Port touched (OnEnter) event.
-    private void SaveNewRewardDueToPortTouched()
-    {
-        reward = RewardStructure.Instance.RewPortPokedCorrectly;
-        touchRewardPriority = true;
-        Debug.Log(reward);
-    }
-
-    private void SaveNewRewardDueToAreaTouched(string area_type)
-    {
-        switch (area_type)
-        {
-            case string value when value.Contains("High"):
-                reward = RewardStructure.Instance.AreaHighInterest;
-                break;
-            case string value when value.Contains("Med"):
-                reward = RewardStructure.Instance.AreaMedInterest;
-                break;
-            case string value when value.Contains("Low"):
-                reward = RewardStructure.Instance.AreaLowInterest;
-                break;
-        }
-        touchRewardPriority = true;
-        Debug.Log(reward);
+        newPixelsObservationArrayReady = true;
+        //Debug.Log("---- End Saving Pixels");
     }
 
     private void SaveNewFeaturesObservation(List<byte[]> features)
     {
+        //Debug.Log("---- Start Saving Features");
         observationFeaturesList = features;
+        newFeaturessObservationReady = true;
+        //Debug.Log("---- End Saving Features");
     }
 
+    private void SaveNewReward(float new_reward)
+    {
+        //Debug.Log("---- Start Saving Reward");
+        reward = new_reward;
+        newRewardReady = true;
+        //Debug.Log("---- End Saving Reward");
+    }
+
+    private void StopFeaturesSending()
+    {
+        newFeaturessObservationReady = false;
+    }
 }
         

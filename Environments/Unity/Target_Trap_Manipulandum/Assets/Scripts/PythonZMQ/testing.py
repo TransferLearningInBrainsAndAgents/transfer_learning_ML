@@ -5,7 +5,6 @@ import zmq
 import subprocess
 import os
 import time
-import cv2
 import struct
 import matplotlib.pyplot as plt
 import dearpygui.dearpygui as dpg
@@ -194,7 +193,7 @@ def type_from_byte(byte, type_as_str):
     if type_as_str == 'float':
         return struct.unpack(endian_type, byte)[0]
     if type_as_str == 'int':
-        return int.from_bytes(bytes, endian_order)
+        return int.from_bytes(byte, endian_order)
     if type_as_str == 'bool':
         return struct.unpack('?', byte)[0]
 
