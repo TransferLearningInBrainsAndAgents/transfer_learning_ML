@@ -329,7 +329,7 @@ def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
                                                       translation_snap=translation_snap,
                                                       rotation_snap=rotation_snap,
                                                       observation_type=observation_type)
-
+    accurate_delay(1000)
     if connection_state:
         do_action('Nothing:Nothing')
         accurate_delay(5)

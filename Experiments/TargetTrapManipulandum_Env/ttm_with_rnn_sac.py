@@ -37,10 +37,10 @@ epochs = 5
 number_of_trajectories = 100
 max_ep_len = 10000
 lr = 1e-3
-gamma_lr = 0.5
+gamma_lr = 0.8
 epochs_to_update_lr = 2
 gamma = 0.99
-seed = 42
+seed = 41
 update_every = 5
 save_every_n_update = 4
 polyak = 0.95
@@ -52,7 +52,7 @@ clip_ratio = 0.95
 use_alpha_annealing = True
 entropy_target_mult = 0.98
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, '2023_08_29-10_23', 'pyt_save', 'actor_critic_model_1_80.pt')
+#model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_05-14_59', 'pyt_save', 'actor_critic_model_4_80.pt')
 
 model = SAC(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len,
             save_every_n_update=save_every_n_update, gamma=gamma, lr=lr, gamma_lr=gamma_lr,
@@ -68,7 +68,7 @@ model.train_agent(ttm_env)
 with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'wb') as f:
     pickle.dump(ttm_env.save_observations, f)
 
-model.test_agent(test_env=ttm_env, num_test_episodes=1, random_init=400, greedy_ratio=0.5)
+observations, rewards = model.test_agent(test_env=ttm_env, num_test_episodes=5, random_init=200, greedy_ratio=0.8)
 
 
 # Plot path
