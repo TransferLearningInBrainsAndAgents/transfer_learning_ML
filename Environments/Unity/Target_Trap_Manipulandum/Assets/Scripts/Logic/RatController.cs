@@ -383,6 +383,15 @@ public class RatController : MonoBehaviour
         float rounded_x = (float)Math.Round(x, removeDigits);
         float rounded_z = (float)Math.Round(z, removeDigits);
 
+        if(rounded_x > 3.15 || rounded_x < -3.15) 
+        {
+            rounded_x = 3.14f;
+        }
+        if (rounded_z > 3.15 || rounded_z < -3.15)
+        {
+            rounded_z = 3.14f;
+        }
+
         transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);
     }
 

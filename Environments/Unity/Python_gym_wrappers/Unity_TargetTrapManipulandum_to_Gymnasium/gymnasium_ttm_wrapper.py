@@ -188,9 +188,10 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         action_str = self.action_dict[action]
         ucp.do_action(action_str)
         reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
-        if reward is None:
+        while reward is None:
             print('------ None reward returned------')
             print('Trying again')
+            ucp.accurate_delay(10)
             ucp.do_action(action_str)
             reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
             print('---------------------------------')

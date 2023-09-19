@@ -33,14 +33,14 @@ ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_u
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 50
+epochs = 40
 number_of_trajectories = 10
 max_ep_len = 10000
 lr = 1e-3
 gamma_lr = 0.9
 epochs_to_update_lr = 5
 gamma = 0.99
-seed = 40
+seed = 37
 update_every = 5
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
@@ -52,7 +52,7 @@ clip_ratio = 0.95
 use_alpha_annealing = True
 entropy_target_mult = 0.98
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_05-14_59', 'pyt_save', 'actor_critic_model_4_80.pt')
+#model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_08-12_46', 'pyt_save', 'actor_critic_model_49_9.pt')
 
 model = SAC(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len,
             save_every_n_update=save_every_n_update, gamma=gamma, lr=lr, gamma_lr=gamma_lr,
@@ -68,7 +68,9 @@ model.train_agent(ttm_env)
 with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'wb') as f:
     pickle.dump(ttm_env.save_observations, f)
 
-observations, rewards = model.test_agent(test_env=ttm_env, num_test_episodes=5, random_init=1000, greedy_ratio=0.8)
+for i in range(10):
+    print('---- {} -----'.format(i))
+    observations, rewards = model.test_agent(test_env=ttm_env, num_test_episodes=4, random_init=1000, greedy_ratio=0.2)
 
 
 # Plot path
