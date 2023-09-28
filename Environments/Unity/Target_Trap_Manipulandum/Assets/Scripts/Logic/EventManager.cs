@@ -24,7 +24,7 @@ public class EventManager : MonoBehaviour
     public UnityEvent onReseting;
     public UnityEvent onResetDone;
     public UnityEvent onStopFeaturesSending;
-
+    
     [System.Serializable]
     public class StringEvent : UnityEvent<string> { }
     public class IntEvent : UnityEvent<int> { }
@@ -36,6 +36,7 @@ public class EventManager : MonoBehaviour
 
     public StringEvent onUpdatedAction;
     public StringEvent onParametersChange;
+    public StringEvent onBodyCollisionInArea;
     public FloatEvent onRewardFromAction;
     public FloatEvent onRewardReady;
     public IntEvent onRedoFeaturesObservations;
@@ -72,6 +73,7 @@ public class EventManager : MonoBehaviour
             onLeftButtonUnPressed = new();
             onRightButtonUnPressed = new();
             onUpdatedAction = new();
+            onBodyCollisionInArea = new();
 
             //Observations Events
             onNeedingNewPixelsObservation = new();
@@ -85,6 +87,7 @@ public class EventManager : MonoBehaviour
             onRewardPortTouched = new();
             onRewardFromAction = new();
             onRewardReady = new();
+            
         }
 
         else
