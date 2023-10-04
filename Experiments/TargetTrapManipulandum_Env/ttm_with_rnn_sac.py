@@ -33,24 +33,24 @@ ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_u
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 40
+epochs = 100
 number_of_trajectories = 10
 max_ep_len = 10000
-lr = 5e-4
+lr = 1e-4
 gamma_lr = 0.95
-epochs_to_update_lr = 10
+epochs_to_update_lr = 20
 gamma = 0.99
-seed = 42
+seed = 43
 update_every = 10
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
 batch_size = 10
 hidden_size = 256
-start_steps = 2000
+start_steps = 200
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
-entropy_target_mult = 0.98
+entropy_target_mult = 0.95
 model_file_to_load = None
 #model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_19-16_41', 'pyt_save', 'actor_critic_model_6_9.pt')
 

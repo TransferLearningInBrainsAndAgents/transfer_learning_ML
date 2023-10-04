@@ -82,6 +82,13 @@ public class RatController : MonoBehaviour
         SizeOfBody = transform.Find("Body").localScale.z;
         SizeOfHead = transform.Find("Head").localScale.z;
 
+        float x = UnityEngine.Random.value * 6.0f - 3.0f;
+        float z = UnityEngine.Random.value * 6.0f - 3.0f;
+        
+        transform.position = new Vector3(x, transform.position.y, z);
+        transform.rotation = Quaternion.Euler(0.0f, (float)UnityEngine.Random.Range(0, 360) * rotateSnap, 0.0f);
+        RepositionInGrid();
+
     }
 
 
@@ -138,14 +145,14 @@ public class RatController : MonoBehaviour
     /// <param name="actionMessage"></param>
     void ActionObservationRewardCacade(string actionMessage)
     {
-        Debug.Log("---- Start Cascade");
+        //Debug.Log("---- Start Cascade");
         TakeAction(actionMessage);
         
         EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation(0));
         EventManager.Instance.onNeedingNewTotalReward.Invoke();
         EventManager.Instance.onNeedingNewPixelsObservation.Invoke();
 
-        Debug.Log("---- End Cascade");
+        //Debug.Log("---- End Cascade");
     }
 
     void ActionObservationRewardCacadeAfterReset()
@@ -159,7 +166,7 @@ public class RatController : MonoBehaviour
     /// </summary>
     void TakeAction(string message)
     {
-        Debug.Log("------ Start TakeAction");
+        //Debug.Log("------ Start TakeAction");
 
         CollisionCheck headCollisionCheck = transform.Find("Head").GetComponent<CollisionCheck>();
         CollisionCheck bodyCollisionCheck = transform.Find("Body").GetComponent<CollisionCheck>();
@@ -282,7 +289,7 @@ public class RatController : MonoBehaviour
                 EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
                 break;
         }
-        Debug.Log("------ End TakeAction");
+        //Debug.Log("------ End TakeAction");
 
     }
 
@@ -291,7 +298,7 @@ public class RatController : MonoBehaviour
     /// </summary>
     List<byte[]> GenerateFeaturesObservation(int currentRewardPosition)
     {
-        Debug.Log($"------ Start GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
+        //Debug.Log($"------ Start GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
 
         float manipulandumAngle = Manipulandum.transform.rotation.eulerAngles.z;
         bool targetTrapState = (Target.transform.rotation.eulerAngles.z == 0);
@@ -363,7 +370,7 @@ public class RatController : MonoBehaviour
             }
 
         }
-        Debug.Log($"------ End GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
+        //Debug.Log($"------ End GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
         return features_to_send;
     }
 

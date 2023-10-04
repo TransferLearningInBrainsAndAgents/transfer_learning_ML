@@ -90,7 +90,8 @@ public class ReqRepClient : MonoBehaviour
     /// <summary>
     /// <c>HandleResponseMessage</c> is called when the agent sents a request for an observation to the environment.
     /// </summary>
-    /// <param name="message">the message from the agent describing what observation it needs. The possible values should be defined in the CommunicationProtocol</param>
+    /// <param name="message">the message from the agent describing what observation it needs. 
+    /// The possible values should be defined in the CommunicationProtocol</param>
     private void HandleResponseMessage(string message, ResponseSocket repSocket)
     {
         //Debug.Log("-- HandleResponseMessage Start");
@@ -185,7 +186,7 @@ public class ReqRepClient : MonoBehaviour
 
     private void SaveNewReward(float new_reward)
     {
-        Debug.Log($"---- Start Saving Reward = {new_reward}");
+        //Debug.Log($"---- Start Saving Reward = {new_reward}");
         reward = new_reward;
         newRewardReady = true;
         //Debug.Log("---- End Saving Reward");
