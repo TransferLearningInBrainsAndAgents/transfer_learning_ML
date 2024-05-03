@@ -20,18 +20,16 @@ public class EventManager : MonoBehaviour
     public UnityEvent onRightButtonPressed;
     public UnityEvent onLeftButtonUnPressed;
     public UnityEvent onRightButtonUnPressed;
+    public UnityEvent onRewardPortTouched;
     public UnityEvent onReseting;
     public UnityEvent onResetDone;
     public UnityEvent onStopFeaturesSending;
-    public UnityEvent onStepTaken;
     
     [System.Serializable]
     public class StringEvent : UnityEvent<string> { }
     public class IntEvent : UnityEvent<int> { }
-    public class IntArrayEvent : UnityEvent<int[]> { }
     public class ByteArrayEvent : UnityEvent<byte[]> { }
     public class FloatEvent: UnityEvent<float>{ }
-    public class FloatArrayEvent : UnityEvent<float[]> { }
     public class ListFOfByteArraysEvent: UnityEvent<List<byte[]>> { }
     public class ScreenResolutionEvent: UnityEvent<int, int> { }
 
@@ -40,10 +38,8 @@ public class EventManager : MonoBehaviour
     public StringEvent onParametersChange;
     public StringEvent onBodyCollisionInArea;
     public FloatEvent onRewardFromAction;
-    public FloatEvent onRewardFromRules;
     public FloatEvent onRewardReady;
-    public FloatArrayEvent onAddRewardTimersToObservations;
-    public IntArrayEvent onRewardRulesUpdate;
+    public IntEvent onRedoFeaturesObservations;
     public ByteArrayEvent onPixelsObservationReady;
     public FloatEvent onNewMoveSnapReceived;
     public FloatEvent onNewRotateSnapReceived;
@@ -83,14 +79,12 @@ public class EventManager : MonoBehaviour
             onNeedingNewPixelsObservation = new();
             onPixelsObservationReady = new();
             onFeaturesObservationReady = new();
-            onAddRewardTimersToObservations = new();
+            onRedoFeaturesObservations = new();
             onStopFeaturesSending = new();
 ;
             //Reward Events
-            onStepTaken = new();
-            onRewardRulesUpdate = new();
             onNeedingNewTotalReward = new();
-            onRewardFromRules = new();
+            onRewardPortTouched = new();
             onRewardFromAction = new();
             onRewardReady = new();
             

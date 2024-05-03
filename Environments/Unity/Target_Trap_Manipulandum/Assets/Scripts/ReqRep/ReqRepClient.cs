@@ -94,7 +94,7 @@ public class ReqRepClient : MonoBehaviour
     /// The possible values should be defined in the CommunicationProtocol</param>
     private void HandleResponseMessage(string message, ResponseSocket repSocket)
     {
-        Debug.Log("-- HandleResponseMessage Start");
+        //Debug.Log("-- HandleResponseMessage Start");
 
         while(!newRewardReady || !newFeaturessObservationReady || !newPixelsObservationArrayReady) { }
 
@@ -124,45 +124,44 @@ public class ReqRepClient : MonoBehaviour
         newRewardReady = false;
         newFeaturessObservationReady = false;
         newPixelsObservationArrayReady = false;
-        Debug.Log("-- HandleResponseMessage End");
+        //Debug.Log("-- HandleResponseMessage End");
     }
 
     // Functions that deal with the different requests by the agent (like camera observations, feature observations and rewards)
     private void SendReward(ResponseSocket repSocket, TimeSpan timeout, bool more)
     {
-        Debug.Log($"---- Start Sending Reward = {reward}");
+        //Debug.Log($"---- Start Sending Reward = {reward}");
         while (!newRewardReady) { }
         string stringReward = reward.ToString();
         repSocket.TrySendFrame(timeout, stringReward, more);
         reward = 0f;
         newRewardReady = false;
-        Debug.Log("---- End Sending Reward");
+        //Debug.Log("---- End Sending Reward");
     }
 
     private void SendFeatures(ResponseSocket repSocket, TimeSpan timeout)
     {
-        Debug.Log($"---- Start Sending Features, e.g. {observationFeaturesList[8]}");
+        //Debug.Log($"---- Start Sending Features, e.g. {observationFeaturesList[8]}");
         while (!newFeaturessObservationReady) { }
         foreach(byte[] feature in observationFeaturesList)
         {
             repSocket.TrySendFrame(timeout, feature, true);
-            Debug.Log(System.Text.Encoding.Default.GetString(feature));
         }
 
         newFeaturessObservationReady = false;
-        Debug.Log("---- End Sending Features");
+        //Debug.Log("---- End Sending Features");
     }
 
     private void SendPixels(ResponseSocket repSocket, TimeSpan timeout, bool more)
     {
-        Debug.Log($"---- Start Sending Pixels {observationPixelsArray.Length}");
+        //Debug.Log($"---- Start Sending Pixels {observationPixelsArray.Length}");
         while (!newPixelsObservationArrayReady) {}
 
         repSocket.TrySendFrame(timeout, observationPixelsArray, more);
 
         newPixelsObservationArrayReady = false;
 
-        Debug.Log("---- End Sending Pixels");
+        //Debug.Log("---- End Sending Pixels");
     }
 
     // Functions that create the buffers for the different responses of the environment to the agent
@@ -171,26 +170,26 @@ public class ReqRepClient : MonoBehaviour
 
     private void SaveNewPixelsObservation(byte[] array)
     {
-        Debug.Log("---- Start Saving Pixels");
+        //Debug.Log("---- Start Saving Pixels");
         observationPixelsArray = array;
         newPixelsObservationArrayReady = true;
-        Debug.Log("---- End Saving Pixels");
+        //Debug.Log("---- End Saving Pixels");
     }
 
     private void SaveNewFeaturesObservation(List<byte[]> features)
     {
-        Debug.Log("---- Start Saving Features");
+        //Debug.Log("---- Start Saving Features");
         observationFeaturesList = features;
         newFeaturessObservationReady = true;
-        Debug.Log("---- End Saving Features");
+        //Debug.Log("---- End Saving Features");
     }
 
     private void SaveNewReward(float new_reward)
     {
-        Debug.Log($"---- Start Saving Reward = {new_reward}");
+        //Debug.Log($"---- Start Saving Reward = {new_reward}");
         reward = new_reward;
         newRewardReady = true;
-        Debug.Log("---- End Saving Reward");
+        //Debug.Log("---- End Saving Reward");
     }
 
     private void StopFeaturesSending()

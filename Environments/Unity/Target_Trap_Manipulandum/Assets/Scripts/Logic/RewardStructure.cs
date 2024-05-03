@@ -6,9 +6,9 @@ using UnityEngine;
 /// <summary>
 /// This is a Singleton that defines the different rewards of the environment.
 /// </summary>
-public class ActionsRewardStructure : MonoBehaviour
+public class RewardStructure : MonoBehaviour
 {
-    public static ActionsRewardStructure Instance;
+    public static RewardStructure Instance;
 
     public float NotMoved;
     public float MovedForwards;
@@ -17,6 +17,10 @@ public class ActionsRewardStructure : MonoBehaviour
     public float TurnedCCW;
     public float LeftPaw;
     public float RightPaw;
+    public float RewPortPokedCorrectly;
+    public float AreaHighInterest;
+    public float AreaMedInterest;
+    public float AreaLowInterest;
 
     private void Reset()
     {
@@ -27,6 +31,10 @@ public class ActionsRewardStructure : MonoBehaviour
         TurnedCCW = -1f;
         LeftPaw = -1f;
         RightPaw = -1f;
+        RewPortPokedCorrectly = 30f;
+        AreaHighInterest = 0f;
+        AreaMedInterest = 0f;
+        AreaLowInterest = 0f;
     }
 
     private void Awake()
