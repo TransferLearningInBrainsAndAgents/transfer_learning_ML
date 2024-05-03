@@ -6,7 +6,9 @@ import pickle
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper \
     import TargetTrapManipulandum_UnityWrapper_Env
 import torch
-from rnn_sac.sac.sac import SAC
+
+LSTM_OR_TRANS = 'LSTM' #  or 'TRANS'
+
 
 torch.set_default_device('cuda:0')
 
@@ -23,11 +25,13 @@ screen_res = (100, 100)
 move_snap = 0.1
 rotate_snap = 10
 save_observations = True
+reward_into_state_level = 1
 
 ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
                                                   observation_type=observation_type, action_space_type=action_space_type,
                                                   screen_res=screen_res, move_snap=move_snap, rotate_snap=rotate_snap,
-                                                  save_observations=save_observations)
+                                                  save_observations=save_observations,
+                                                  reward_into_state_level=reward_into_state_level)
 
 # Define and Train the agent
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
@@ -44,7 +48,6 @@ seed = 43
 update_every = 10
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
-batch_size = 10
 hidden_size = 256
 start_steps = 200
 exploration_sampling = False
@@ -54,14 +57,21 @@ entropy_target_mult = 0.95
 model_file_to_load = None
 #model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_19-16_41', 'pyt_save', 'actor_critic_model_6_9.pt')
 
-model = SAC(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len,
-            save_every_n_update=save_every_n_update, gamma=gamma, lr=lr, gamma_lr=gamma_lr,
-            epochs_to_update_lr=epochs_to_update_lr, polyak=polyak, epochs=epochs, batch_size=batch_size,
-            hidden_size=hidden_size, start_steps=start_steps, update_every=update_every,
-            exploration_sampling=exploration_sampling, clip_ratio=clip_ratio,
-            number_of_trajectories=number_of_trajectories, use_alpha_annealing=use_alpha_annealing,
-            entropy_target_mult=entropy_target_mult,
-            model_file_to_load=model_file_to_load)
+if LSTM_OR_TRANS == 'LSTM':
+    from rnn_sac.sac_lstm.sac import SAC as SAC_LSTM
+    buffer_size = 10
+    model = SAC_LSTM(env=ttm_env, logger_kwargs=logger_kwargs, seed=seed, max_ep_len=max_ep_len,
+                     save_every_n_update=save_every_n_update, gamma=gamma, lr=lr, gamma_lr=gamma_lr,
+                     epochs_to_update_lr=epochs_to_update_lr, polyak=polyak, epochs=epochs, batch_size=buffer_size,
+                     hidden_size=hidden_size, start_steps=start_steps, update_every=update_every,
+                     exploration_sampling=exploration_sampling, clip_ratio=clip_ratio,
+                     number_of_trajectories=number_of_trajectories, use_alpha_annealing=use_alpha_annealing,
+                     entropy_target_mult=entropy_target_mult,
+                     model_file_to_load=model_file_to_load)
+
+elif LSTM_OR_TRANS == 'TRANS':
+    from rnn_sac.sac_trans.sac import SAC as SAC_TRANS
+    model = SAC_TRANS()
 
 model.train_agent(ttm_env)
 

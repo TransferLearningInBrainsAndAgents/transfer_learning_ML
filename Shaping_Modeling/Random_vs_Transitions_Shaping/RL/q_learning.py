@@ -79,7 +79,7 @@ def train(agent, env, save_results_file, save_Q_file):
         if total_reward > best_reward:
             best_reward = total_reward
         print("Episode#:{} reward:{} best_reward:{} eps:{}".format(episode,
-                                     total_reward, best_reward, agent.epsilon))
+                                                                   total_reward, best_reward, agent.rho))
 
         if episode % 2 == 0:
             policy = compute_policy()
