@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3906499251072341517}
   m_Layer: 0
   m_Name: Rat
-  m_TagString: Rat
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -435,6 +435,7 @@ GameObject:
   - component: {fileID: 3906499252385513505}
   - component: {fileID: 3906499252385513504}
   - component: {fileID: 3906499252385513519}
+  - component: {fileID: 3906499252385513506}
   - component: {fileID: 3906499252385513508}
   - component: {fileID: 3906499252385513507}
   m_Layer: 0
@@ -523,6 +524,19 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3906499252385513506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3906499252385513517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27a4550c4a3f5e84e95f9d0db4062463, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  observationCamera: {fileID: 3906499252935638523}
 --- !u!114 &3906499252385513508
 MonoBehaviour:
   m_ObjectHideFlags: 0

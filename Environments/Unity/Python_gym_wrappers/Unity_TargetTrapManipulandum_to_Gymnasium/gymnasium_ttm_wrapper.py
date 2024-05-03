@@ -30,14 +30,10 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
     :param rotate_snap: (int) How much the agent will rotate with every 'Rotate' command (in degrees, so the default 10
             is 10 degrees)
     :param save_observations: (None | List) If not None then the step function will append in that list the new observation
-    :param reward_into_state_level: (0 | 1 | 2) If 0 then the state carries no info of the reward (the point info from
-            Unity is removed). If 1 then the point info returned from Unity into the state when a reward is given is
-            kept into the state. If 2 then the universal reward function adding timing of reward into the state is
-            used.
     """
     def __init__(self, path_to_unity_builds: str, game_executable: str, observation_type: str = 'Features',
                  action_space_type: str = 'Simple', screen_res: Tuple[int, int] = (100, 100), move_snap: float = 0.1,
-                 rotate_snap: int = 10, save_observations=False, reward_into_state_level=0):
+                 rotate_snap: int = 10, save_observations=False):
 
         self.observation_type = observation_type
         self.screen_res = screen_res
@@ -56,8 +52,6 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         elif action_space_type == 'Simple':
             self.action_dict = {0: 'Move:Forwards', 1: 'Move:Back', 2: 'Rotate:CW', 3: 'Rotate:CCW'}
         self.action_space = gym.spaces.Discrete(len(self.action_dict))
-
-        self.reward_into_state_level = reward_into_state_level
 
         self.info = {'Game': self.game, 'Observation Type': self.observation_type,
                      'Action Space Type': action_space_type, 'Move Snap': self.translation_snap,
@@ -109,8 +103,7 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
     def generate_multidiscrete_sample_from_unity_features_dict(self, features: Dict) -> np.ndarray:
         """
         Takes in the features dictionary returned by the Unity game and transforms it into a np.ndarray as if it was
-        a sample from the MultiDiscrete gym space the environment uses to wrap the feature observations in.
-
+        a sample from the MultiDiscrete gym space the environment uses to wrap the feature observations in
         :param features: The Unity returned Dict
         :return: The features transformed into a gym.spaces.MultiDiscrete sample
         """
@@ -195,14 +188,14 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         action_str = self.action_dict[action]
         ucp.do_action(action_str)
         reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
-        #while reward is None:
-        #    print('------ None reward returned------')
-        #    print('Trying again')
-        #    ucp.accurate_delay(10)
-        #    ucp.do_action(action_str)
-        #    reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
-        #    print('---------------------------------')
-        ucp.accurate_delay(5)
+        while reward is None:
+            print('------ None reward returned------')
+            print('Trying again')
+            ucp.accurate_delay(10)
+            ucp.do_action(action_str)
+            reward, pixels, features, ms_taken = ucp.get_observation(self.observation_type)
+            print('---------------------------------')
+        ucp.accurate_delay(3)
         obs = self.generate_observation(pixels, features)
 
         if self.save_observations is not False:

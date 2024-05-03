@@ -16,7 +16,7 @@ public class CameraObservationsController : MonoBehaviour
     {
         Screen.SetResolution(width, height, FullScreenMode.Windowed);
     }
-
+    
     private void Start()
     {
         EventManager.Instance.onNewScreenResolution.AddListener(RecalculateScreenRes);
@@ -64,12 +64,12 @@ public class CameraObservationsController : MonoBehaviour
 
         try
         {
-            byte[] array = request.GetData<byte>().ToArray();
+            byte[]  array = request.GetData<byte>().ToArray();
 
             byte[] pngBytes = ImageConversion.EncodeArrayToPNG(array, format, (uint)Screen.width, (uint)Screen.height);
-
+            
             EventManager.Instance.onPixelsObservationReady.Invoke(pngBytes);
-
+             
         }
         catch (Exception e)
         {
