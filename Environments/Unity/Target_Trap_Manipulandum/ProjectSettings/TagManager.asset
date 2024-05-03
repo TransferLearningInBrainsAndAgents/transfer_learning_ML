@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - VRGame
+  - Rat
   layers:
   - Default
   - TransparentFX

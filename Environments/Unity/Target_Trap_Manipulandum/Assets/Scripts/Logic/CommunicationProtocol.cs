@@ -12,6 +12,7 @@ public class CommunicationProtocol : MonoBehaviour
     public readonly OrderedDictionary actionAndParametersComProtocol = new OrderedDictionary();
     public readonly OrderedDictionary featuresComProtocol = new OrderedDictionary();
     public readonly List<string> observationsComProtocol = new List<string>() { "Pixels", "Features", "Everything" };
+    public readonly int numberOfRules = 8;
 
     void Start()
     {
@@ -39,7 +40,7 @@ public class CommunicationProtocol : MonoBehaviour
         featuresComProtocol.Add("Right Button Position", new List<string>() { "float", "2" });
         featuresComProtocol.Add("Target Trap State", new List<string>() { "bool", "1" });
         featuresComProtocol.Add("Manipulandum Angle", new List<string>() { "float", "1" });
-        featuresComProtocol.Add("Got Reward", new List<string>() { "int", "1" });
+        featuresComProtocol.Add("Reward Timers", new List<string>() { "int", "8" });
 
     }
 }
