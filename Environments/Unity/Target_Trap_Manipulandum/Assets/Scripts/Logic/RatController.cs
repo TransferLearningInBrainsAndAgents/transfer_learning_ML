@@ -8,6 +8,7 @@ using System.Text;
 using System;
 using System.Collections;
 
+
 public class RatController : MonoBehaviour
 {
     [Tooltip("The amount of movement per Move action. Between 0.1 and 2.0.")]
@@ -21,6 +22,9 @@ public class RatController : MonoBehaviour
     public Quaternion initialRotation;
 
     private int numberOfRotations = 0;
+
+    private int numberOfRules;
+    private double epsilon;
 
     [ExecuteInEditMode]
     void OnValidate()
@@ -48,7 +52,7 @@ public class RatController : MonoBehaviour
             rotateSnap = 90;
     }
 
-
+    private CommunicationProtocol comProtocol;
     private OrderedDictionary actionAndParametersComProtocol;
     private OrderedDictionary featuresComProtocol;
     private bool LeftPawExtended = false;
@@ -62,16 +66,22 @@ public class RatController : MonoBehaviour
     private float SizeOfBody;
     private float SizeOfHead;
 
+    private GlobalRewardFunction globalRewardFunction;
+
 
     void Start()
     {
-        EventManager.Instance.onUpdatedAction.AddListener(ActionObservationRewardCacade);
+        EventManager.Instance.onUpdatedAction.AddListener(ActionObservationRewardCascade);
         EventManager.Instance.onParametersChange.AddListener(UpdateParameters);
         EventManager.Instance.onResetDone.AddListener(ActionObservationRewardCacadeAfterReset);
-        EventManager.Instance.onRedoFeaturesObservations.AddListener(RedoFeaturesWithUpdatedReward);
+        EventManager.Instance.onAddRewardTimersToObservations.AddListener(RedoFeaturesWithUpdatedReward);
 
-        actionAndParametersComProtocol = gameObject.GetComponent<CommunicationProtocol>().actionAndParametersComProtocol;
+        comProtocol = gameObject.GetComponent<CommunicationProtocol>();
+        numberOfRules = comProtocol.numberOfRules;
+        actionAndParametersComProtocol = comProtocol.actionAndParametersComProtocol;
         featuresComProtocol = gameObject.GetComponent<CommunicationProtocol>().featuresComProtocol;
+
+        globalRewardFunction = GameObject.FindGameObjectWithTag("VRGame").GetComponent<GlobalRewardFunction>();
 
         LeftButtonPosition = GameObject.Find("LeftButton").transform.position;
         RightButtonPosition = GameObject.Find("RightButton").transform.position;
@@ -81,6 +91,9 @@ public class RatController : MonoBehaviour
 
         SizeOfBody = transform.Find("Body").localScale.z;
         SizeOfHead = transform.Find("Head").localScale.z;
+
+        double epsilon = GameObject.FindGameObjectsWithTag("VRGame")[0].GetComponent<GlobalRewardFunction>().epsilon;
+
 
         float x = UnityEngine.Random.value * 6.0f - 3.0f;
         float z = UnityEngine.Random.value * 6.0f - 3.0f;
@@ -94,7 +107,8 @@ public class RatController : MonoBehaviour
 
 
     /// <summary>
-    /// <c>UpdateParameters</c> is called when the agent asks the environment to change some parameter. The message format here is "ParameterType:ParameterValue" and
+    /// <c>UpdateParameters</c> is called when the agent asks the environment to change some parameter. 
+    /// The message format here is "ParameterType:ParameterValue" and
     /// it should abide with the CommunicationProtocol
     /// </summary>
     void UpdateParameters(string message)
@@ -133,22 +147,23 @@ public class RatController : MonoBehaviour
 
 
     /// <summary>
-    /// <c>ActionObservationRewardCacade</c> is called when the agent tells the environment it has done an action.
-    /// This generates a caxade of environment events including
+    /// <c>ActionObservationRewardCascade</c> is called when the agent tells the environment it has done an action.
+    /// This generates a cascade of environment events including
     /// Take the action
-    /// Update the pixels observation
-    /// Update any rewrad due to action
-    /// Update any reward due to position
     /// Update the features observation
+    /// Update any rewrad due to action
+    /// Update any reward due to rules
+    /// Update the pixels observation
     /// Send to the agent the obserevations and reward 
     /// </summary>
     /// <param name="actionMessage"></param>
-    void ActionObservationRewardCacade(string actionMessage)
+    void ActionObservationRewardCascade(string actionMessage)
     {
         //Debug.Log("---- Start Cascade");
         TakeAction(actionMessage);
-        
-        EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation(0));
+        EventManager.Instance.onStepTaken.Invoke();
+
+        EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation(new float[0]));
         EventManager.Instance.onNeedingNewTotalReward.Invoke();
         EventManager.Instance.onNeedingNewPixelsObservation.Invoke();
 
@@ -157,7 +172,7 @@ public class RatController : MonoBehaviour
 
     void ActionObservationRewardCacadeAfterReset()
     {
-        ActionObservationRewardCacade("Nothing:Nothing");
+        ActionObservationRewardCascade("Nothing:Nothing");
     }
 
     /// <summary>
@@ -166,7 +181,7 @@ public class RatController : MonoBehaviour
     /// </summary>
     void TakeAction(string message)
     {
-        //Debug.Log("------ Start TakeAction");
+        Debug.Log("------ Start TakeAction");
 
         CollisionCheck headCollisionCheck = transform.Find("Head").GetComponent<CollisionCheck>();
         CollisionCheck bodyCollisionCheck = transform.Find("Body").GetComponent<CollisionCheck>();
@@ -190,20 +205,20 @@ public class RatController : MonoBehaviour
                         {
                             transform.Translate(new Vector3(0, 0, moveSnap));
                             RepositionInGrid();
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.MovedForwards);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.MovedForwards);
                         }
                         else
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "Back"
                         if (!RightPawExtended && !LeftPawExtended && !bodyCollisionCheck.ShouldIMove(-transform.forward, 1.1f * SizeOfBody / 2))
                         {
                             transform.Translate(new Vector3(0, 0, -moveSnap));
                             RepositionInGrid();
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.MovedBack);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.MovedBack);
                         }
                         else
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                         break;
                 }
                 break;
@@ -218,20 +233,20 @@ public class RatController : MonoBehaviour
                         {
                             numberOfRotations += 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.TurnedCW);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.TurnedCW);
                         }
                         else
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "CCW"
                         if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(-transform.right, 1.1f * SizeOfBody / 2))
                         {
                             numberOfRotations -= 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.TurnedCCW);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.TurnedCCW);
                         }
                         else
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                         break;
                 }
                 break;
@@ -245,7 +260,7 @@ public class RatController : MonoBehaviour
                         if (!LeftPawExtended)
                         {
                             transform.Find("LeftPaw").Translate(new Vector3(0, 0, 0.6f));
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.LeftPaw);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.LeftPaw);
                             LeftPawExtended = true;
                         }
                         break;
@@ -253,12 +268,12 @@ public class RatController : MonoBehaviour
                         if (LeftPawExtended)
                         {
                             transform.Find("LeftPaw").Translate(new Vector3(0, 0, -0.6f));
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.LeftPaw);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.LeftPaw);
                             LeftPawExtended = false;
                         }
                         break;
                 }
-                EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                 break;
             case var rightPaw when rightPaw == all_actions[3]: // "RightPaw"
 
@@ -270,7 +285,7 @@ public class RatController : MonoBehaviour
                         if (!RightPawExtended)
                         {
                             RightPawExtended = true;
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.RightPaw);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.RightPaw);
                             transform.Find("RightPaw").Translate(new Vector3(0, 0, 0.6f));
                         }
                         break;
@@ -278,27 +293,27 @@ public class RatController : MonoBehaviour
                         if (RightPawExtended)
                         {
                             RightPawExtended = false;
-                            EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.RightPaw);
+                            EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.RightPaw);
                             transform.Find("RightPaw").Translate(new Vector3(0, 0, -0.6f));
                         }
                         break;
                 }
-                EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                 break;
             case var nothing when nothing == all_actions[4]: // "Nothing"
-                EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
+                EventManager.Instance.onRewardFromAction.Invoke(ActionsRewardStructure.Instance.NotMoved);
                 break;
         }
-        //Debug.Log("------ End TakeAction");
+        Debug.Log("------ End TakeAction");
 
     }
 
     /// <summary>
     /// <c>GenerateFeaturesObservation</c> is called when the environment has finished updating itself and can now generate the new features to pass to the agent if required.
     /// </summary>
-    List<byte[]> GenerateFeaturesObservation(int currentRewardPosition)
+    List<byte[]> GenerateFeaturesObservation(float[] rewardTimers)
     {
-        //Debug.Log($"------ Start GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
+        Debug.Log($"------ Start GenerateFeatures with rewardTimers = {rewardTimers}");
 
         float manipulandumAngle = Manipulandum.transform.rotation.eulerAngles.z;
         bool targetTrapState = (Target.transform.rotation.eulerAngles.z == 0);
@@ -359,18 +374,30 @@ public class RatController : MonoBehaviour
                 case var value when value == all_feature_names[7]: // "Manipulandum Angle"
                     features_to_send.Add(BitConverter.GetBytes(manipulandumAngle));
                     break;
-                case var value when value == all_feature_names[8]: // "Got Reward"
-                    features_to_send.Add(BitConverter.GetBytes(currentRewardPosition));
-                    if(currentRewardPosition > 0)
+                case var value when value == all_feature_names[8]: // "Reward Timers"
+                    if(rewardTimers.Length > 0)
                     {
-                        // Update the reward if this function has run again due to positional reward
-                        EventManager.Instance.onNeedingNewTotalReward.Invoke();
+                        bool needToUpdateTotalReward = false;
+                        foreach (float timer in rewardTimers)
+                        {
+                            features_to_send.Add(BitConverter.GetBytes(timer));
+                            //if (timer > epsilon)
+                            //{
+                            //    needToUpdateTotalReward = true;
+                            //}
+                        }
+
+                        //if (needToUpdateTotalReward)
+                        //{
+                            // Update the reward if this function has run again due to positional reward
+                        //    EventManager.Instance.onNeedingNewTotalReward.Invoke();
+                        //}
                     }
                     break;
             }
 
         }
-        //Debug.Log($"------ End GenerateFeatures with currentRewardPosition = {currentRewardPosition}");
+        Debug.Log($"------ End GenerateFeatures with rewardTimers = {rewardTimers}");
         return features_to_send;
     }
 
@@ -402,10 +429,10 @@ public class RatController : MonoBehaviour
         transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);
     }
 
-    void RedoFeaturesWithUpdatedReward(int new_reward)
+    void RedoFeaturesWithUpdatedReward(float[] rewardTimers)
     {
-        //Debug.Log(String.Format("------ RedoFeatures with Reward {0}", new_reward));
-        EventManager.Instance.onFeaturesObservationReady.Invoke(GenerateFeaturesObservation(new_reward));
+        Debug.Log(String.Format("------ RedoFeatures with rewardTimers {0}", rewardTimers));
+        GenerateFeaturesObservation(rewardTimers);
     }
 
 }

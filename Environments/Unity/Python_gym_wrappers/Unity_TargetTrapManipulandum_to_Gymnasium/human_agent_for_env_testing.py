@@ -19,15 +19,19 @@ total_reward = 0
 path_to_unity_exe = os.path.join(r'E:\\', 'Code', 'Mine', 'Transfer_Learning', 'transfer_learning_ML', 'Environments',
                                  'Unity', 'Target_Trap_Manipulandum', 'Builds')
 # path for the desktop
-path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
-                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
+#path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
+#                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
 
 game_exe = 'TTM_ExploreCorners'
 observation_type = 'Everything'
 action_space_type = 'Full'
+save_observations = True
+reward_into_state_level = 1
 
 ttm_env = TTM_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe, observation_type=observation_type,
-                  action_space_type=action_space_type, screen_res=(100, 100), move_snap=0.4, rotate_snap=20)
+                  action_space_type=action_space_type, screen_res=(100, 100), move_snap=0.4, rotate_snap=20,
+                  save_observations=save_observations,
+                  reward_into_state_level=reward_into_state_level)
 
 
 # Create the initial image
