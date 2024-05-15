@@ -30,8 +30,7 @@ reward_into_state_level = 1
 ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe,
                                                   observation_type=observation_type, action_space_type=action_space_type,
                                                   screen_res=screen_res, move_snap=move_snap, rotate_snap=rotate_snap,
-                                                  save_observations=save_observations,
-                                                  reward_into_state_level=reward_into_state_level)
+                                                  save_observations=save_observations)
 
 # Define and Train the agent
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
