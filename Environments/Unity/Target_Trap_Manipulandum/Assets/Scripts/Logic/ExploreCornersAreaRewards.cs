@@ -22,14 +22,14 @@ public class ExploreCornersAreaRewards : MonoBehaviour
         EventManager.Instance.onBodyCollisionInArea.AddListener(BodyCollidedWithReweardArea);
 
         areasTouched = new Dictionary<string, bool>{
-            {"AreaHigh_Left",false},
-            {"AreaMedium_Left", false},
-            {"AreaHigh_Right", false},
-            {"AreaMedium_Right", false},
-            {"AreaHigh_Front", false},
-            {"AreaMedium_Front", false},
-            {"AreaHigh_Back", false},
-            {"AreaMedium_Back", false}
+            {"AreaHigh_Left",true},
+            {"AreaMedium_Left", true},
+            {"AreaHigh_Right", true},
+            {"AreaMedium_Right", true},
+            {"AreaHigh_Front", true},
+            {"AreaMedium_Front", true},
+            {"AreaHigh_Back", true},
+            {"AreaMedium_Back", true}
         };
 
         timers = new Dictionary<string, float>
@@ -90,8 +90,10 @@ public class ExploreCornersAreaRewards : MonoBehaviour
         Debug.Log($"timer = {timers[rewardArea]}");
         Debug.Log($"Inactivity = {inactivityTimes[rewardArea]}");
         */
-        if (!areasTouched[oppositeAreas[rewardArea]] && timers[rewardArea] >= inactivityTimes[rewardArea]) 
+        if (areasTouched[oppositeAreas[rewardArea]] && timers[rewardArea] >= inactivityTimes[rewardArea]) 
         {
+            //Debug.Log("Reward given");
+            areasTouched[oppositeAreas[rewardArea]] = false;
             areasTouched[rewardArea] = true;
             inactivityTimes[rewardArea] = Random.Range(rewAreaMinimumInactivity, rewAreaMaximumInactivity);
             timers[rewardArea] = 0.0f;

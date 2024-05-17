@@ -86,7 +86,8 @@ public class RatController : MonoBehaviour
         float z = UnityEngine.Random.value * 6.0f - 3.0f;
         
         transform.position = new Vector3(x, transform.position.y, z);
-        transform.rotation = Quaternion.Euler(0.0f, (float)UnityEngine.Random.Range(0, 360) * rotateSnap, 0.0f);
+        numberOfRotations = (int)UnityEngine.Random.Range(0, 360 / rotateSnap);
+        transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
         RepositionInGrid();
 
     }
