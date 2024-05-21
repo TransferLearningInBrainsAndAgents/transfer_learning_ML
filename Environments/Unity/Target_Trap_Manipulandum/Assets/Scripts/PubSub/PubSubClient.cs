@@ -61,7 +61,7 @@ public class PubSubClient : MonoBehaviour
     private void HandleMessage(string message)
     {
         string message_data = message.Substring(message.IndexOf("=")).Substring(1);
-        Debug.Log(message_data);
+        //Debug.Log($"PubSub Message in: {message}");
         if (message.Contains("Action"))
         {
             EventManager.Instance.onUpdatedAction.Invoke(message_data);

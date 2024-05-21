@@ -178,7 +178,6 @@ def get_observation(observation_type):
     global poller_req
 
     start_time = time.perf_counter()
-
     unity_socket_obs_data_req.send_string(observation_type)
     timeout = 100
     msgs = dict(poller_req.poll(timeout))
@@ -329,16 +328,16 @@ def connect(executable: str, observation_type: str, screen_res: Tuple[int, int],
                                                       translation_snap=translation_snap,
                                                       rotation_snap=rotation_snap,
                                                       observation_type=observation_type)
-    accurate_delay(1000)
+    accurate_delay(2000)
     if connection_state:
         do_action('Nothing:Nothing')
         accurate_delay(5)
         reward, pixels, features, ms_taken = get_observation(observation_type)
         while not test_if_data_have_gone_through(reward, pixels, features, observation_type):
             do_action('Nothing:Nothing')
-            accurate_delay(5)
+            accurate_delay(10)
             reward, pixels, features, ms_taken = get_observation(observation_type)
-            accurate_delay(50)
+            accurate_delay(100)
     else:
         print('Cannot connect to Unity game.')
         return None

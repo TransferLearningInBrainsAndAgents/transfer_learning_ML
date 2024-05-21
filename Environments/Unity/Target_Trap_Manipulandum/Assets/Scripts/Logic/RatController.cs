@@ -167,7 +167,7 @@ public class RatController : MonoBehaviour
     /// </summary>
     void TakeAction(string message)
     {
-        //Debug.Log("------ Start TakeAction");
+        //Debug.Log($"------ Start TakeAction: {message}");
 
         CollisionCheck headCollisionCheck = transform.Find("Head").GetComponent<CollisionCheck>();
         CollisionCheck bodyCollisionCheck = transform.Find("Body").GetComponent<CollisionCheck>();

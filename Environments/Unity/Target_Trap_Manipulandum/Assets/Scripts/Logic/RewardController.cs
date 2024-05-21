@@ -14,12 +14,13 @@ public class RewardController : MonoBehaviour
     {
         EventManager.Instance.onRewardFromAction.AddListener(SaveNewRewardDueToAction);
         EventManager.Instance.onNeedingNewTotalReward.AddListener(GenerateNewTotalReward);
+        EventManager.Instance.onRewardPortTouched.AddListener(SaveNewRewardDueToPortTouched);
     }
 
     private void GenerateNewTotalReward()
     {
         float totalReward = action_reward + area_reward + (port_reward ? RewardStructure.Instance.RewPortPokedCorrectly: 0f);
-      
+        //Debug.Log($"Total Reward = {totalReward}");
         EventManager.Instance.onRewardReady.Invoke(totalReward);
         action_reward = 0f;
         area_reward = 0f;
@@ -35,7 +36,7 @@ public class RewardController : MonoBehaviour
     // This is called from the Visual Scripting Graph in the VRGame Object,
     // by the Transition (Success State -> Running_Trial State), 
     // if there is a Reward Port touched (OnEnter) event.
-    private void SaveNewRewardDueToPortTouched()
+    public void SaveNewRewardDueToPortTouched()
     {
         EventManager.Instance.onStopFeaturesSending.Invoke();
         port_reward = true;
@@ -47,6 +48,7 @@ public class RewardController : MonoBehaviour
     // when the reward areas are crossed for the first time after n seconds
     public void SaveNewRewardDueToAreaTouched(string area_type)
     {
+        Debug.Log(area_type);
         EventManager.Instance.onStopFeaturesSending.Invoke();
         switch (area_type)
         {

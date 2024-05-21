@@ -94,9 +94,10 @@ public class ReqRepClient : MonoBehaviour
     /// The possible values should be defined in the CommunicationProtocol</param>
     private void HandleResponseMessage(string message, ResponseSocket repSocket)
     {
-        //Debug.Log("-- HandleResponseMessage Start");
+        //Debug.Log($"-- HandleResponseMessage Start with message: {message}");
 
-        while(!newRewardReady || !newFeaturessObservationReady || !newPixelsObservationArrayReady) { }
+
+        while (!newRewardReady || !newFeaturessObservationReady || !newPixelsObservationArrayReady) { }
 
         TimeSpan timeout = new(0, 0, 1);
 

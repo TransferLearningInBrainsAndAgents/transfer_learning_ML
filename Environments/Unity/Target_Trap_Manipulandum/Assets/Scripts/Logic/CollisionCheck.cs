@@ -78,17 +78,14 @@ public class CollisionCheck : MonoBehaviour
             case "Hole":
                 CustomEvent.Trigger(transform.gameObject, "HolePoked");
                 break;
-            case string value when value.Contains("Area"):
+            case string s when s.Contains("AreaHigh"):
                 EventManager.Instance.onBodyCollisionInArea.Invoke(gameobject_name);
-                break;
-            /*
-            case string value when value.Contains("AreaHigh"):
                 CustomEvent.Trigger(transform.gameObject, "AreaHighEntered");
                 break;
             case string value when value.Contains("AreaMedium"):
+                EventManager.Instance.onBodyCollisionInArea.Invoke(gameobject_name);
                 CustomEvent.Trigger(transform.gameObject, "AreaMediumEntered");
                 break;
-            */
         }
     }
     

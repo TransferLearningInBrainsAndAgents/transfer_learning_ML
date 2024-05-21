@@ -11,6 +11,7 @@ public class Reset_FindRewardPoke : MonoBehaviour
 
     void DoNothingOnReset()
     {
+        Debug.Log("Reseting");
         EventManager.Instance.onResetDone.Invoke();
     }
 
