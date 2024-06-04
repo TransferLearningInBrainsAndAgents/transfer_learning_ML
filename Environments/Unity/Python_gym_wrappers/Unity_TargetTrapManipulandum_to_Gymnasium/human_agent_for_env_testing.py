@@ -19,10 +19,10 @@ total_reward = 0
 path_to_unity_exe = os.path.join(r'E:\\', 'Code', 'Mine', 'Transfer_Learning', 'transfer_learning_ML', 'Environments',
                                  'Unity', 'Target_Trap_Manipulandum', 'Builds')
 # path for the desktop
-#path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
-#                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
+path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
+                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
 
-game_exe = 'TTM_FindReward'
+game_exe = 'TTM_ExploreCorners'
 observation_type = 'Everything'
 action_space_type = 'Full'
 

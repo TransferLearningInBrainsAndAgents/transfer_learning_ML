@@ -22,7 +22,7 @@ game_exe = 'TTM_ExploreCorners'
 observation_type = 'Features'
 action_space_type = 'Full'  # 'Simple' or 'Full'
 screen_res = (100, 100)
-move_snap = 0.1
+move_snap = 0.2
 rotate_snap = 10
 save_observations = True
 reward_into_state_level = 1
@@ -36,7 +36,7 @@ ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_u
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 100
+epochs = 70
 number_of_trajectories = 10
 max_ep_len = 10000
 lr = 1e-4
@@ -47,12 +47,12 @@ seed = 43
 update_every = 10
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
-hidden_size = 256
-start_steps = 200
+hidden_size = 4096
+start_steps = 20
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
-entropy_target_mult = 0.95
+entropy_target_mult = 0.8
 model_file_to_load = None
 #model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_19-16_41', 'pyt_save', 'actor_critic_model_6_9.pt')
 
