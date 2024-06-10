@@ -5,6 +5,7 @@ import os
 import pickle
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper \
     import TargetTrapManipulandum_UnityWrapper_Env
+import base_folders
 import torch
 
 LSTM_OR_TRANS = 'LSTM' #  or 'TRANS'
@@ -12,13 +13,9 @@ LSTM_OR_TRANS = 'LSTM' #  or 'TRANS'
 
 torch.set_default_device('cuda:0')
 
-#base_folder = os.path.join(r'/nfs', 'nhome', 'live', 'gdimitri', 'Projects')  # SWC server
-#base_folder = os.path.join(r'E:\\', 'Development', 'Repos')  # Arena
-base_folder = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL')  # Laptop and Office
-
-path_to_unity_exe = os.path.join(base_folder, 'transfer_learning_ML', 'Environments', 'Unity',
+path_to_unity_exe = os.path.join(base_folders.base_folder, 'transfer_learning_ML', 'Environments', 'Unity',
                                  'Target_Trap_Manipulandum', 'Builds')
-base_tensorboard_log = os.path.join(base_folder, 'transfer_learning_ML', 'Experiments', 'TargetTrapManipulandum_Env',
+base_tensorboard_log = os.path.join(base_folders.base_folder, 'transfer_learning_ML', 'Experiments', 'TargetTrapManipulandum_Env',
                                     'tensorboard_logs', 'Discreet_SAC', 'Working')
 
 game_exe = 'TTM_FindReward'

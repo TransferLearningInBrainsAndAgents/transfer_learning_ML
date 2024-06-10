@@ -1,6 +1,6 @@
 
 import os
-
+import base_folders
 import numpy as np
 
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium.gymnasium_ttm_wrapper import \
@@ -15,12 +15,8 @@ features = None
 time_of_frame = None
 total_reward = 0
 
-#path for the laptop
-path_to_unity_exe = os.path.join(r'E:\\', 'Code', 'Mine', 'Transfer_Learning', 'transfer_learning_ML', 'Environments',
-                                 'Unity', 'Target_Trap_Manipulandum', 'Builds')
-# path for the desktop
-path_to_unity_exe = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL', 'transfer_learning_ML',
-                                 'Environments', 'Unity', 'Target_Trap_Manipulandum', 'Builds')
+path_to_unity_exe = os.path.join(base_folders.base_folder, 'transfer_learning_ML', 'Environments', 'Unity',
+                                 'Target_Trap_Manipulandum', 'Builds')
 
 game_exe = 'TTM_ExploreCorners'
 observation_type = 'Everything'
