@@ -12,13 +12,16 @@ LSTM_OR_TRANS = 'LSTM' #  or 'TRANS'
 
 torch.set_default_device('cuda:0')
 
-base_folder = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL')
+#base_folder = os.path.join(r'/nfs', 'nhome', 'live', 'gdimitri', 'Projects')  # SWC server
+#base_folder = os.path.join(r'E:\\', 'Development', 'Repos')  # Arena
+base_folder = os.path.join(r'E:\\', 'Software', 'Develop', 'Source', 'Repos', 'RL')  # Laptop and Office
+
 path_to_unity_exe = os.path.join(base_folder, 'transfer_learning_ML', 'Environments', 'Unity',
                                  'Target_Trap_Manipulandum', 'Builds')
 base_tensorboard_log = os.path.join(base_folder, 'transfer_learning_ML', 'Experiments', 'TargetTrapManipulandum_Env',
-                                    'tensorboard_logs', 'Discreet_SAC')
+                                    'tensorboard_logs', 'Discreet_SAC', 'Working')
 
-game_exe = 'TTM_ExploreCorners'
+game_exe = 'TTM_FindReward'
 observation_type = 'Features'
 action_space_type = 'Full'  # 'Simple' or 'Full'
 screen_res = (100, 100)
@@ -36,14 +39,14 @@ ttm_env = TargetTrapManipulandum_UnityWrapper_Env(path_to_unity_builds=path_to_u
 logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
                                             str(datetime.now()).rpartition(':')[0].replace('-', '_').replace(' ', '-').
                                             replace(':', '_'))}
-epochs = 70
+epochs = 100
 number_of_trajectories = 10
 max_ep_len = 10000
 lr = 1e-4
 gamma_lr = 0.95
 epochs_to_update_lr = 20
 gamma = 0.99
-seed = 43
+seed = 40
 update_every = 10
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
@@ -52,9 +55,10 @@ start_steps = 20
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
-entropy_target_mult = 0.8
+entropy_target_mult = 0.2
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, '2023_09_19-16_41', 'pyt_save', 'actor_critic_model_6_9.pt')
+model_file_to_load = os.path.join(base_tensorboard_log, 'ExploreCorners', 'NoMetaRL', '2024_05_29-08_42_h_4096_a_0p95',
+                                  'pyt_save', 'actor_critic_model_99_9.pt')
 
 if LSTM_OR_TRANS == 'LSTM':
     from rnn_sac.sac_lstm.sac import SAC as SAC_LSTM
@@ -77,7 +81,7 @@ model.train_agent(ttm_env)
 with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'wb') as f:
     pickle.dump(ttm_env.save_observations, f)
 
-for i in range(10):
+for i in range(50):
     print('---- {} -----'.format(i))
     observations, rewards = model.test_agent(test_env=ttm_env, num_test_episodes=4, random_init=1000, greedy_ratio=0.2)
 
