@@ -23,7 +23,7 @@ observation_type = 'Everything'
 action_space_type = 'Full'
 
 ttm_env = TTM_Env(path_to_unity_builds=path_to_unity_exe, game_executable=game_exe, observation_type=observation_type,
-                  action_space_type=action_space_type, screen_res=(100, 100), move_snap=0.4, rotate_snap=20)
+                  action_space_type=action_space_type, screen_res=(100, 100), move_snap=0.2, rotate_snap=10)
 
 
 # Create the initial image

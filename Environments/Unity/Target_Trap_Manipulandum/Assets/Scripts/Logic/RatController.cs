@@ -187,7 +187,7 @@ public class RatController : MonoBehaviour
                 switch (latest_action.Value)
                 {
                     case var value when value == all_values_in_action[0]: // "Forwards"
-                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.forward, 1.1f * SizeOfHead / 2))
+                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.forward, 2.5f * SizeOfBody / 2))
                         {
                             transform.Translate(new Vector3(0, 0, moveSnap));
                             RepositionInGrid();
@@ -197,7 +197,7 @@ public class RatController : MonoBehaviour
                             EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "Back"
-                        if (!RightPawExtended && !LeftPawExtended && !bodyCollisionCheck.ShouldIMove(-transform.forward, 1.1f * SizeOfBody / 2))
+                        if (!RightPawExtended && !LeftPawExtended && !bodyCollisionCheck.ShouldIMove(-transform.forward, 1.5f * SizeOfBody / 2))
                         {
                             transform.Translate(new Vector3(0, 0, -moveSnap));
                             RepositionInGrid();
@@ -215,7 +215,7 @@ public class RatController : MonoBehaviour
                 switch (latest_action.Value)
                 {
                     case var value when value == all_values_in_action[0]: // "CW"
-                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.right, 1.1f * SizeOfBody / 2))
+                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.right, 0.2f * SizeOfBody / 2))
                         {
                             numberOfRotations += 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -225,7 +225,7 @@ public class RatController : MonoBehaviour
                             EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "CCW"
-                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(-transform.right, 1.1f * SizeOfBody / 2))
+                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(-transform.right, 0.2f * SizeOfBody / 2))
                         {
                             numberOfRotations -= 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -391,13 +391,21 @@ public class RatController : MonoBehaviour
         float rounded_x = (float)Math.Round(x, removeDigits);
         float rounded_z = (float)Math.Round(z, removeDigits);
 
-        if(rounded_x > 3.15 || rounded_x < -3.15) 
+        if(rounded_x > 3.15) 
         {
             rounded_x = 3.14f;
         }
-        if (rounded_z > 3.15 || rounded_z < -3.15)
+        if (rounded_x < -3.15)
+        {
+            rounded_x = - 3.14f;
+        }
+        if (rounded_z > 3.15)
         {
             rounded_z = 3.14f;
+        }
+        if (rounded_z < -3.15)
+        {
+            rounded_z = -3.14f;
         }
 
         transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);
