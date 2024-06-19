@@ -18,7 +18,7 @@ path_to_unity_exe = os.path.join(base_folders.base_folder, 'transfer_learning_ML
 base_tensorboard_log = os.path.join(base_folders.base_folder, 'transfer_learning_ML', 'Experiments', 'TargetTrapManipulandum_Env',
                                     'tensorboard_logs', 'Discreet_SAC', 'Working')
 
-game_exe = 'TTM_FindReward'
+game_exe = 'TTM_ExploreCorners'
 observation_type = 'Features'
 action_space_type = 'Full'  # 'Simple' or 'Full'
 screen_res = (100, 100)
@@ -39,8 +39,9 @@ logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
 epochs = 100
 number_of_trajectories = 10
 max_ep_len = 10000
-lr = 1e-4
+lr = 2e-4
 gamma_lr = 0.95
+entropy_target_mult = 0.95
 epochs_to_update_lr = 20
 gamma = 0.99
 seed = 40
@@ -52,10 +53,9 @@ start_steps = 20
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
-entropy_target_mult = 0.2
 model_file_to_load = None
-model_file_to_load = os.path.join(base_tensorboard_log, 'ExploreCorners', 'NoMetaRL', '2024_05_29-08_42_h_4096_a_0p95',
-                                  'pyt_save', 'actor_critic_model_99_9.pt')
+#model_file_to_load = os.path.join(base_tensorboard_log, 'ExploreCorners', 'NoMetaRL', '2024_05_29-08_42_h_4096_a_0p95',
+#                                  'pyt_save', 'actor_critic_model_99_9.pt')
 
 if LSTM_OR_TRANS == 'LSTM':
     from rnn_sac.sac_lstm.sac import SAC as SAC_LSTM
