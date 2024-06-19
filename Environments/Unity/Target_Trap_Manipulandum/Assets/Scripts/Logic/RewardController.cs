@@ -48,7 +48,6 @@ public class RewardController : MonoBehaviour
     // when the reward areas are crossed for the first time after n seconds
     public void SaveNewRewardDueToAreaTouched(string area_type)
     {
-        Debug.Log(area_type);
         EventManager.Instance.onStopFeaturesSending.Invoke();
         switch (area_type)
         {

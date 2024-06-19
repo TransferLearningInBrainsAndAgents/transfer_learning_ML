@@ -82,8 +82,8 @@ public class RatController : MonoBehaviour
         SizeOfBody = transform.Find("Body").localScale.z;
         SizeOfHead = transform.Find("Head").localScale.z;
 
-        float x = UnityEngine.Random.value * 6.0f - 3.0f;
-        float z = UnityEngine.Random.value * 6.0f - 3.0f;
+        float x = UnityEngine.Random.value * 6.0f - 4.0f;
+        float z = UnityEngine.Random.value * 6.0f - 4.0f;
         
         transform.position = new Vector3(x, transform.position.y, z);
         numberOfRotations = (int)UnityEngine.Random.Range(0, 360 / rotateSnap);
@@ -215,7 +215,7 @@ public class RatController : MonoBehaviour
                 switch (latest_action.Value)
                 {
                     case var value when value == all_values_in_action[0]: // "CW"
-                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(transform.right, 0.2f * SizeOfBody / 2))
+                        if (!RightPawExtended && !LeftPawExtended)// && !headCollisionCheck.ShouldIMove(transform.right, 0.2f * SizeOfBody / 2))
                         {
                             numberOfRotations += 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -225,7 +225,7 @@ public class RatController : MonoBehaviour
                             EventManager.Instance.onRewardFromAction.Invoke(RewardStructure.Instance.NotMoved);
                         break;
                     case var value when value == all_values_in_action[1]: // "CCW"
-                        if (!RightPawExtended && !LeftPawExtended && !headCollisionCheck.ShouldIMove(-transform.right, 0.2f * SizeOfBody / 2))
+                        if (!RightPawExtended && !LeftPawExtended)// && !headCollisionCheck.ShouldIMove(-transform.right, 0.2f * SizeOfBody / 2))
                         {
                             numberOfRotations -= 1;
                             transform.rotation = Quaternion.Euler(0.0f, numberOfRotations * rotateSnap, 0.0f);
@@ -391,21 +391,21 @@ public class RatController : MonoBehaviour
         float rounded_x = (float)Math.Round(x, removeDigits);
         float rounded_z = (float)Math.Round(z, removeDigits);
 
-        if(rounded_x > 3.15) 
+        if(rounded_x > 2.35) 
         {
-            rounded_x = 3.14f;
+            rounded_x = 2.34f;
         }
-        if (rounded_x < -3.15)
+        if (rounded_x < -2.35)
         {
-            rounded_x = - 3.14f;
+            rounded_x = - 2.34f;
         }
-        if (rounded_z > 3.15)
+        if (rounded_z > 2.35)
         {
-            rounded_z = 3.14f;
+            rounded_z = 2.34f;
         }
-        if (rounded_z < -3.15)
+        if (rounded_z < -2.35)
         {
-            rounded_z = -3.14f;
+            rounded_z = -2.344f;
         }
 
         transform.position = new Vector3(rounded_x, transform.position.y, rounded_z);

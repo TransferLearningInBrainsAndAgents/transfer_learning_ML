@@ -84,15 +84,15 @@ public class ExploreCornersAreaRewards : MonoBehaviour
 
     void BodyCollidedWithReweardArea(string rewardArea)
     {
-        /*
+        
         Debug.Log($"{rewardArea} touched  = {areasTouched[rewardArea]}");
         Debug.Log($"Opposite {oppositeAreas[rewardArea]} touched = {areasTouched[oppositeAreas[rewardArea]]}");
         Debug.Log($"timer = {timers[rewardArea]}");
         Debug.Log($"Inactivity = {inactivityTimes[rewardArea]}");
-        */
+        
         if (areasTouched[oppositeAreas[rewardArea]] && timers[rewardArea] >= inactivityTimes[rewardArea]) 
         {
-            //Debug.Log("Reward given");
+            Debug.Log("Reward given");
             areasTouched[oppositeAreas[rewardArea]] = false;
             areasTouched[rewardArea] = true;
             inactivityTimes[rewardArea] = Random.Range(rewAreaMinimumInactivity, rewAreaMaximumInactivity);
