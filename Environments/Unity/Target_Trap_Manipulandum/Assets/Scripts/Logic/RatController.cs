@@ -361,7 +361,7 @@ public class RatController : MonoBehaviour
                     features_to_send.Add(BitConverter.GetBytes(manipulandumAngle));
                     break;
                 case var value when value == all_feature_names[8]: // "Got Reward"
-                    features_to_send.Add(BitConverter.GetBytes(currentRewardPosition));
+                    features_to_send.Add(BitConverter.GetBytes(currentRewardPosition    ));
                     if(currentRewardPosition > 0)
                     {
                         // Update the reward if this function has run again due to positional reward

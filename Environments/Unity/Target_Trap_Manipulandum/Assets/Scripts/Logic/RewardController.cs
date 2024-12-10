@@ -61,7 +61,7 @@ public class RewardController : MonoBehaviour
                 area_reward = RewardStructure.Instance.AreaLowInterest;
                 break;
         }
-        EventManager.Instance.onRedoFeaturesObservations.Invoke(1);
+        EventManager.Instance.onRedoFeaturesObservations.Invoke((int)area_reward);
     }
 
     

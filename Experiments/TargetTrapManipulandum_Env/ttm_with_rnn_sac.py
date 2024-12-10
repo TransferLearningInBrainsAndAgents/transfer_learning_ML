@@ -39,22 +39,22 @@ logger_kwargs = {'output_dir': os.path.join(base_tensorboard_log,
 epochs = 100
 number_of_trajectories = 10
 max_ep_len = 10000
-lr = 2e-4
+lr = 1e-4
 gamma_lr = 0.95
-entropy_target_mult = 0.95
+entropy_target_mult = 0.8
 epochs_to_update_lr = 20
 gamma = 0.99
-seed = 40
+seed = 43
 update_every = 10
 save_every_n_update = 2  # That means the model will be saved every  save_every_n_update * update_every trajectories
 polyak = 0.95
 hidden_size = 4096
-start_steps = 20
+start_steps = 500
 exploration_sampling = False
 clip_ratio = 0.95
 use_alpha_annealing = True
 model_file_to_load = None
-#model_file_to_load = os.path.join(base_tensorboard_log, 'ExploreCorners', 'NoMetaRL', '2024_05_29-08_42_h_4096_a_0p95',
+#model_file_to_load = os.path.join(base_tensorboard_log, '2024_06_19-20_16',
 #                                  'pyt_save', 'actor_critic_model_99_9.pt')
 
 if LSTM_OR_TRANS == 'LSTM':
@@ -78,7 +78,7 @@ model.train_agent(ttm_env)
 with open(os.path.join(model.logger.output_dir, 'all_observations.pkl'), 'wb') as f:
     pickle.dump(ttm_env.save_observations, f)
 
-for i in range(50):
+for i in range(20):
     print('---- {} -----'.format(i))
     observations, rewards = model.test_agent(test_env=ttm_env, num_test_episodes=4, random_init=1000, greedy_ratio=0.2)
 
