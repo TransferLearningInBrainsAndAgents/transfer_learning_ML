@@ -3,6 +3,7 @@ from typing import Tuple, Dict
 import os
 import gymnasium as gym
 import numpy as np
+import platform
 
 from Environments.Unity.Python_gym_wrappers.Unity_TargetTrapManipulandum_to_Gymnasium import \
     unity_communication_protocol as ucp
@@ -43,7 +44,8 @@ class TargetTrapManipulandum_UnityWrapper_Env(gym.Env):
         self.game = game_executable
         self.save_observations = save_observations if save_observations is False else []
 
-        self.path_to_unity_exe = os.path.join(path_to_unity_builds,  game_executable + '.exe')
+        suffix = '.exe' if platform.system() == 'Windows' else '.x86_64'
+        self.path_to_unity_exe = os.path.join(path_to_unity_builds, game_executable + suffix)
 
         self.observation_space = self.generate_observation_space()
         if action_space_type == 'Full':
